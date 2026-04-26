@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createDb } from '../../src/main/db/client'
 
 describe('createDb', () => {
-  it('creates all six required tables', () => {
+  it('creates all seven required tables', () => {
     const db = createDb(':memory:')
     const rows = db
       .prepare(
@@ -18,6 +18,7 @@ describe('createDb', () => {
     expect(names).toContain('events')
     expect(names).toContain('mcp_servers')
     expect(names).toContain('plugins')
+    expect(names).toContain('worktrees')
   })
 
   it('enforces the foreign key constraint from tasks to workspaces', () => {
@@ -65,5 +66,14 @@ describe('createDb', () => {
          VALUES ('t1', 'ws1', 'Task', 'markdown', 'INVALID_STATUS')`,
       ).run()
     }).toThrow()
+  })
+
+  it('creates the worktrees table', () => {
+    const sqlite = createDb(':memory:')
+    const tables = sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='worktrees'")
+      .all() as { name: string }[]
+    expect(tables).toHaveLength(1)
+    sqlite.close()
   })
 })

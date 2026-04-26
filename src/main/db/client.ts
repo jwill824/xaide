@@ -75,6 +75,22 @@ const SCHEMA_SQL = `
 
   CREATE INDEX IF NOT EXISTS idx_events_session_id
     ON events(session_id);
+
+  CREATE TABLE IF NOT EXISTS worktrees (
+    id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    repo_path TEXT NOT NULL,
+    branch TEXT NOT NULL,
+    base_branch TEXT NOT NULL DEFAULT 'HEAD',
+    worktree_path TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active'
+      CHECK(status IN ('active','merged','discarded')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_worktrees_workspace_id
+    ON worktrees(workspace_id);
 `
 
 export type RawDb = Database.Database

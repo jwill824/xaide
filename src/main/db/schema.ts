@@ -89,3 +89,23 @@ export const plugins = sqliteTable('plugins', {
   configJson: text('config_json').notNull().default('{}'),
   installedAt: text('installed_at').notNull().default(sql`(datetime('now'))`),
 })
+
+export const worktrees = sqliteTable(
+  'worktrees',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    repoPath: text('repo_path').notNull(),
+    branch: text('branch').notNull(),
+    baseBranch: text('base_branch').notNull().default('HEAD'),
+    worktreePath: text('worktree_path').notNull(),
+    status: text('status', { enum: ['active', 'merged', 'discarded'] })
+      .notNull()
+      .default('active'),
+    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+    updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+  },
+  (t) => [index('idx_worktrees_workspace_id').on(t.workspaceId)],
+)
