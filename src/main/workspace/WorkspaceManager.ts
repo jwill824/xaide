@@ -65,7 +65,12 @@ export class WorkspaceManager {
     }
     const row = this.db
       .update(workspaces)
-      .set({ ...input, ...extra, updatedAt: new Date().toISOString() })
+      .set({
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.repoPath !== undefined && { repoPath: input.repoPath }),
+        ...extra,
+        updatedAt: new Date().toISOString(),
+      })
       .where(eq(workspaces.id, id))
       .returning()
       .get()

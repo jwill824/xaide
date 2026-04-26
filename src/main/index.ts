@@ -2,10 +2,13 @@ import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { createDb } from './db/client'
+import type { RawDb } from './db/client'
 import * as schema from './db/schema'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
 import { registerWorkspaceHandlers } from './ipc'
+
+let sqlite: RawDb | null = null
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -17,7 +20,7 @@ function createWindow(): void {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -32,7 +35,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  const sqlite = createDb(join(app.getPath('userData'), 'xaide.db'))
+  sqlite = createDb(join(app.getPath('userData'), 'xaide.db'))
   const db = drizzle(sqlite, { schema })
   const configLoader = new ConfigLoader()
   const workspaceManager = new WorkspaceManager(db, configLoader)
@@ -43,6 +46,10 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  sqlite?.close()
 })
 
 app.on('window-all-closed', () => {
