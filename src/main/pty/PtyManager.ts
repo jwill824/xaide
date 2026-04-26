@@ -7,6 +7,10 @@ export interface PtyCreateOptions {
   rows: number
   cwd: string
   env?: Record<string, string>
+  /** If provided, spawn this command instead of the default shell. */
+  command?: string
+  /** Args to pass when `command` is provided. Defaults to []. */
+  args?: string[]
 }
 
 interface PtySession {
@@ -20,11 +24,13 @@ export class PtyManager {
 
   create(options: PtyCreateOptions): { id: string; process: pty.IPty } {
     const shell =
-      process.platform === 'win32'
+      options.command ??
+      (process.platform === 'win32'
         ? 'powershell.exe'
-        : (process.env['SHELL'] ?? '/bin/zsh')
+        : (process.env['SHELL'] ?? '/bin/zsh'))
+    const args = options.command ? (options.args ?? []) : []
     const id = randomUUID()
-    const ptyProcess = pty.spawn(shell, [], {
+    const ptyProcess = pty.spawn(shell, args, {
       name: 'xterm-color',
       cols: options.cols,
       rows: options.rows,

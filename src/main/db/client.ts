@@ -29,10 +29,11 @@ const SCHEMA_SQL = `
 
   CREATE TABLE IF NOT EXISTS agent_sessions (
     id TEXT PRIMARY KEY,
-    task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
     agent_id TEXT NOT NULL,
     branch TEXT NOT NULL,
     worktree_path TEXT NOT NULL,
+    pty_session_id TEXT,
     container_id TEXT,
     status TEXT NOT NULL DEFAULT 'pending'
       CHECK(status IN ('pending','running','idle','finished','failed')),

@@ -56,6 +56,8 @@ describe('createDb', () => {
   })
 
   it('rejects invalid status values on tasks', () => {
+
+
     const db = createDb(':memory:')
     db.prepare(
       `INSERT INTO workspaces (id, name, repo_path) VALUES ('ws1', 'WS', '/tmp')`,
@@ -66,6 +68,16 @@ describe('createDb', () => {
          VALUES ('t1', 'ws1', 'Task', 'markdown', 'INVALID_STATUS')`,
       ).run()
     }).toThrow()
+  })
+
+  it('agent_sessions has nullable task_id and pty_session_id column', () => {
+    const db = createDb(':memory:')
+    const row = db
+      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='agent_sessions'")
+      .get() as { sql: string }
+    expect(row.sql).not.toMatch(/task_id TEXT NOT NULL/)
+    expect(row.sql).toMatch(/pty_session_id/)
+    db.close()
   })
 
   it('creates the worktrees table', () => {

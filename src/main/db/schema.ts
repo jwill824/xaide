@@ -38,20 +38,23 @@ export const agentSessions = sqliteTable(
   'agent_sessions',
   {
     id: text('id').primaryKey(),
-    taskId: text('task_id')
-      .notNull()
-      .references(() => tasks.id, { onDelete: 'cascade' }),
+    taskId: text('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
     agentId: text('agent_id').notNull(),
     branch: text('branch').notNull(),
     worktreePath: text('worktree_path').notNull(),
+    ptySessionId: text('pty_session_id'),
     containerId: text('container_id'),
     status: text('status', {
       enum: ['pending', 'running', 'idle', 'finished', 'failed'],
     })
       .notNull()
       .default('pending'),
-    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
-    updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(datetime('now'))`),
+    updatedAt: text('updated_at')
+      .notNull()
+      .default(sql`(datetime('now'))`),
   },
   (t) => [index('idx_agent_sessions_task_id').on(t.taskId)],
 )
