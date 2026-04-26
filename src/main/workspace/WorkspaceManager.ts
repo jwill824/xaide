@@ -35,33 +35,46 @@ export class WorkspaceManager {
     }
     const wsConfig = this.configLoader.loadWorkspace(input.repoPath)
     const now = new Date().toISOString()
-    return this.db
+    const row = this.db
       .insert(workspaces)
       .values({
         id: randomUUID(),
         name: input.name,
         repoPath: input.repoPath,
         configJson: JSON.stringify(wsConfig),
-        sandboxDefaults: '{}',
+        sandboxDefaults: JSON.stringify(wsConfig.sandbox ?? {}),
         layoutJson: '{}',
         createdAt: now,
         updatedAt: now,
       })
       .returning()
       .get()
+    if (!row) throw new Error('Failed to create workspace')
+    return row
   }
 
   update(id: string, input: Partial<CreateWorkspaceInput>): Workspace {
     if (!this.get(id)) throw new Error(`Workspace not found: ${id}`)
-    return this.db
+    if (input.repoPath !== undefined && !existsSync(input.repoPath)) {
+      throw new Error(`Repo path does not exist: ${input.repoPath}`)
+    }
+    const extra: Record<string, unknown> = {}
+    if (input.repoPath !== undefined) {
+      const wsConfig = this.configLoader.loadWorkspace(input.repoPath)
+      extra.configJson = JSON.stringify(wsConfig)
+    }
+    const row = this.db
       .update(workspaces)
-      .set({ ...input, updatedAt: new Date().toISOString() })
+      .set({ ...input, ...extra, updatedAt: new Date().toISOString() })
       .where(eq(workspaces.id, id))
       .returning()
       .get()
+    if (!row) throw new Error(`Update failed for workspace: ${id}`)
+    return row
   }
 
   delete(id: string): void {
+    if (!this.get(id)) throw new Error(`Workspace not found: ${id}`)
     this.db.delete(workspaces).where(eq(workspaces.id, id)).run()
   }
 }

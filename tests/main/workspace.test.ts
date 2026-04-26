@@ -79,4 +79,24 @@ describe('WorkspaceManager', () => {
       makeManager().create({ name: 'Bad', repoPath: '/nonexistent/path/xyz' }),
     ).toThrow('Repo path does not exist')
   })
+
+  it('throws when updating repoPath to a nonexistent path', () => {
+    const mgr = makeManager()
+    const ws = mgr.create({ name: 'Test', repoPath })
+    expect(() => mgr.update(ws.id, { repoPath: '/nonexistent/xyz' })).toThrow(
+      'Repo path does not exist',
+    )
+  })
+
+  it('throws when deleting a nonexistent workspace', () => {
+    expect(() => makeManager().delete('no-such-id')).toThrow(
+      'Workspace not found',
+    )
+  })
+
+  it('configJson is stored on create', () => {
+    const ws = makeManager().create({ name: 'Test', repoPath })
+    expect(typeof ws.configJson).toBe('string')
+    expect(ws.configJson).toBeTruthy()
+  })
 })
