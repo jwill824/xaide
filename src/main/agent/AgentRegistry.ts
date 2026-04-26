@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execSync, execFileSync } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { DetectedAgent } from './types'
@@ -10,7 +10,7 @@ export class AgentRegistry {
 
   private which(cmd: string): string | null {
     try {
-      const out = execSync(`which ${cmd}`)
+      const out = execFileSync('which', [cmd])
       return Buffer.isBuffer(out) ? out.toString('utf8').trim() : String(out).trim()
     } catch {
       return null

@@ -23,7 +23,7 @@ export class AgentSessionManager {
     const agentCmd = AGENT_COMMANDS[input.agentId] ?? { command: input.agentId, args: [] }
 
     const ptyResult = this.pty.create({
-      workspaceId: input.worktreeId,
+      workspaceId: input.repoPath ?? input.worktreeId ?? '',
       cols: input.cols ?? 80,
       rows: input.rows ?? 24,
       cwd: input.worktreePath,
@@ -62,11 +62,8 @@ export class AgentSessionManager {
     return record as AgentSessionRecord
   }
 
-  async list(worktreeId: string): Promise<AgentSessionRecord[]> {
-    const rows = await this.db
-      .select()
-      .from(agentSessions)
-      .where(eq(agentSessions.worktreePath, worktreeId))
+  async list(): Promise<AgentSessionRecord[]> {
+    const rows = await this.db.select().from(agentSessions)
     return rows as AgentSessionRecord[]
   }
 

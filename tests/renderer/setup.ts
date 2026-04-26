@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
-import type { Workspace, WorktreeRecord, XaideAPI } from '../../src/preload/ipc-types'
+import type { Workspace, WorktreeRecord, XaideAPI, AgentAPI } from '../../src/preload/ipc-types'
 
 const stubWs: Workspace = {
   id: 'mock-id',
@@ -43,6 +43,16 @@ const mockXaideApi: XaideAPI = {
       updatedAt: '2026-01-01T00:00:00.000Z',
     })),
     delete: vi.fn(async () => undefined),
+  },
+  agent: {
+    listDetected: vi.fn().mockResolvedValue([]),
+    createSession: vi.fn().mockResolvedValue({
+      id: 'sess-1', agentId: 'claude', branch: 'feat/x', worktreePath: '/tmp/x',
+      ptySessionId: 'pty-1', taskId: null, containerId: null, status: 'running',
+      createdAt: '', updatedAt: '',
+    }),
+    listSessions: vi.fn().mockResolvedValue([]),
+    killSession: vi.fn().mockResolvedValue(undefined),
   },
 }
 

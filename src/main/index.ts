@@ -3,7 +3,7 @@ import { join } from 'path'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { createDb } from './db/client'
 import type { RawDb } from './db/client'
-import * as schema from './db/schema'
+import { dbSchema } from './db/schema'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
 import { WorktreeManager } from './worktree/WorktreeManager'
@@ -45,7 +45,7 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   sqlite = createDb(join(app.getPath('userData'), 'xaide.db'))
-  const db = drizzle(sqlite, { schema })
+  const db = drizzle(sqlite, { schema: dbSchema })
   const configLoader = new ConfigLoader()
   const workspaceManager = new WorkspaceManager(db, configLoader)
   const worktreeManager = new WorktreeManager(db)

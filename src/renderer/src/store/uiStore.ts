@@ -8,6 +8,16 @@ export interface ShellSession {
   cwd: string
 }
 
+export interface AgentSessionUiRecord {
+  id: string
+  ptySessionId: string
+  agentId: string
+  agentName: string
+  branch: string
+  worktreeId: string
+  workspaceId: string
+}
+
 interface UiState {
   activeWorkspaceId: string | null
   sessions: ShellSession[]
@@ -16,6 +26,9 @@ interface UiState {
   browserUrlByWorkspace: Record<string, string>
   browserVisibleByWorkspace: Record<string, boolean>
   activeWorktreeId: string | null
+  agentSessions: AgentSessionUiRecord[]
+  addAgentSession: (session: AgentSessionUiRecord) => void
+  removeAgentSession: (id: string) => void
 
   setActiveWorkspace: (id: string | null) => void
   addSession: (session: ShellSession) => void
@@ -35,6 +48,7 @@ export const useUiStore = create<UiState>((set) => ({
   browserUrlByWorkspace: {},
   browserVisibleByWorkspace: {},
   activeWorktreeId: null,
+  agentSessions: [],
 
   setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
 
@@ -85,4 +99,10 @@ export const useUiStore = create<UiState>((set) => ({
     })),
 
   setActiveWorktree: (id) => set({ activeWorktreeId: id }),
+
+  addAgentSession: (session) =>
+    set((state) => ({ agentSessions: [...state.agentSessions, session] })),
+
+  removeAgentSession: (id) =>
+    set((state) => ({ agentSessions: state.agentSessions.filter((s) => s.id !== id) })),
 }))

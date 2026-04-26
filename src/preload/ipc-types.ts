@@ -138,7 +138,7 @@ export interface CreateAgentSessionInput {
 export interface AgentAPI {
   listDetected: () => Promise<DetectedAgent[]>
   createSession: (input: CreateAgentSessionInput) => Promise<AgentSessionRecord>
-  listSessions: (worktreeId: string) => Promise<AgentSessionRecord[]>
+  listSessions: () => Promise<AgentSessionRecord[]>
   killSession: (sessionId: string, ptySessionId: string) => Promise<void>
 }
 

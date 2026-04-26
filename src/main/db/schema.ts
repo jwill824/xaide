@@ -114,4 +114,14 @@ export const worktrees = sqliteTable(
 )
 
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
-export type DrizzleDb = BetterSQLite3Database<Record<string, never>>
+
+export const dbSchema = {
+  workspaces,
+  tasks,
+  agentSessions,
+  events,
+  mcpServers,
+  plugins,
+  worktrees,
+}
+export type DrizzleDb = BetterSQLite3Database<typeof dbSchema>

@@ -19,6 +19,7 @@ describe('SessionTabBar', () => {
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
         onCloseSession={vi.fn()}
+        onOpenAgentLauncher={vi.fn()}
       />,
     )
     expect(screen.getByText('shell')).toBeInTheDocument()
@@ -36,6 +37,7 @@ describe('SessionTabBar', () => {
         onSelectSession={onSelect}
         onNewSession={vi.fn()}
         onCloseSession={vi.fn()}
+        onOpenAgentLauncher={vi.fn()}
       />,
     )
     await user.click(screen.getByText('agent'))
@@ -53,6 +55,7 @@ describe('SessionTabBar', () => {
         onSelectSession={vi.fn()}
         onNewSession={onNew}
         onCloseSession={vi.fn()}
+        onOpenAgentLauncher={vi.fn()}
       />,
     )
     await user.click(screen.getByRole('button', { name: 'New terminal session' }))
@@ -68,6 +71,7 @@ describe('SessionTabBar', () => {
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
         onCloseSession={vi.fn()}
+        onOpenAgentLauncher={vi.fn()}
       />,
     )
     expect(screen.getByRole('button', { name: 'New terminal session' })).toBeInTheDocument()

@@ -56,12 +56,12 @@ describe('registerAgentHandlers', () => {
     expect(sessionManager.create).toHaveBeenCalledWith(input)
   })
 
-  it('agent:session:list calls sessionManager.list with worktreeId', async () => {
+  it('agent:session:list calls sessionManager.list with no args', async () => {
     const sessionManager = makeSessionManager()
     registerAgentHandlers(makeRegistry(), sessionManager)
     const handler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'agent:session:list')?.[1]
-    await (handler as Function)({}, 'wt-1')
-    expect(sessionManager.list).toHaveBeenCalledWith('wt-1')
+    await (handler as Function)({})
+    expect(sessionManager.list).toHaveBeenCalledWith()
   })
 
   it('agent:session:kill calls sessionManager.kill with sessionId and ptySessionId', async () => {

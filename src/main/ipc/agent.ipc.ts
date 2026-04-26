@@ -13,9 +13,7 @@ export function registerAgentHandlers(
     sessionManager.create(input),
   )
 
-  ipcMain.handle('agent:session:list', (_event, worktreeId: string) =>
-    sessionManager.list(worktreeId),
-  )
+  ipcMain.handle('agent:session:list', () => sessionManager.list())
 
   ipcMain.handle('agent:session:kill', (_event, sessionId: string, ptySessionId: string) =>
     sessionManager.kill(sessionId, ptySessionId),

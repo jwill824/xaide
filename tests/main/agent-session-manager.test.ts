@@ -13,7 +13,7 @@ function makeMockDb() {
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     }),
     select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      from: vi.fn().mockResolvedValue([]),
     }),
   } as unknown as DrizzleDb
 }
@@ -62,8 +62,8 @@ describe('AgentSessionManager', () => {
     expect((pty.create as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({ cwd: '/tmp/wt', command: 'claude' })
   })
 
-  it('list queries agent_sessions filtered by worktreeId', async () => {
-    await manager.list('wt-1')
+  it('list queries all agent_sessions', async () => {
+    await manager.list()
     expect(db.select).toHaveBeenCalledOnce()
   })
 
