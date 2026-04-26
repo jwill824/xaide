@@ -1,5 +1,5 @@
-import { readFileSync, existsSync, mkdirSync } from 'fs'
-import { join, dirname } from 'path'
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
 import { homedir } from 'os'
 import { parse } from 'yaml'
 import {
@@ -16,7 +16,6 @@ export class ConfigLoader {
 
   loadGlobal(): GlobalConfig {
     if (!existsSync(this.globalConfigPath)) {
-      mkdirSync(dirname(this.globalConfigPath), { recursive: true })
       return GlobalConfigSchema.parse({})
     }
     const raw = readFileSync(this.globalConfigPath, 'utf8')

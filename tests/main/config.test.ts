@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdirSync, writeFileSync, rmSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
+import { ZodError } from 'zod'
 import { ConfigLoader } from '../../src/main/config/ConfigLoader'
 
 describe('ConfigLoader', () => {
@@ -66,7 +67,7 @@ mcpServers:
     it('throws ZodError for structurally invalid config', () => {
       const path = join(tmpDir, 'config.yaml')
       writeFileSync(path, `sandbox: "not-an-object"`)
-      expect(() => new ConfigLoader(path).loadGlobal()).toThrow()
+      expect(() => new ConfigLoader(path).loadGlobal()).toThrow(ZodError)
     })
   })
 

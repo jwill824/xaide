@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const SandboxConfigSchema = z.object({
+export const SandboxConfigSchema = z.object({
   enabled: z.boolean().default(false),
   image: z.string().optional(),
   dockerfile: z.string().optional(),
@@ -9,14 +9,14 @@ const SandboxConfigSchema = z.object({
   keepAlive: z.boolean().default(false),
 })
 
-const AgentOverrideSchema = z.object({
+export const AgentOverrideSchema = z.object({
   id: z.string(),
   command: z.string(),
   args: z.array(z.string()).default([]),
   enabled: z.boolean().default(true),
 })
 
-const McpServerConfigSchema = z.object({
+export const McpServerConfigSchema = z.object({
   name: z.string(),
   command: z.string(),
   args: z.array(z.string()).default([]),
@@ -24,7 +24,7 @@ const McpServerConfigSchema = z.object({
   enabled: z.boolean().default(true),
 })
 
-const HookConfigSchema = z.object({
+export const HookConfigSchema = z.object({
   event: z.string(),
   path: z.string(),
 })
