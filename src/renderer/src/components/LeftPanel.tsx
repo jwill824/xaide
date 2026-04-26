@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import { useWorkspaces } from '../hooks/useWorkspaces'
 import { useUiStore } from '../store/uiStore'
+import { WorktreeList } from './WorktreeList'
 
 export const LeftPanel: FC = () => {
   const { data: workspaces = [], isLoading, isError } = useWorkspaces()
@@ -38,6 +39,14 @@ export const LeftPanel: FC = () => {
             </li>
           ))}
         </ul>
+      )}
+      {activeWorkspaceId && (
+        <WorktreeList
+          workspaceId={activeWorkspaceId}
+          repoPath={
+            workspaces.find((ws) => ws.id === activeWorkspaceId)?.repoPath ?? ''
+          }
+        />
       )}
     </aside>
   )

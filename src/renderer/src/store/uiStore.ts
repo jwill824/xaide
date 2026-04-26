@@ -15,6 +15,7 @@ interface UiState {
   layoutByWorkspace: Record<string, PaneNode>
   browserUrlByWorkspace: Record<string, string>
   browserVisibleByWorkspace: Record<string, boolean>
+  activeWorktreeId: string | null
 
   setActiveWorkspace: (id: string | null) => void
   addSession: (session: ShellSession) => void
@@ -23,6 +24,7 @@ interface UiState {
   setLayout: (workspaceId: string, layout: PaneNode) => void
   setBrowserUrl: (workspaceId: string, url: string) => void
   toggleBrowser: (workspaceId: string) => void
+  setActiveWorktree: (id: string | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -32,6 +34,7 @@ export const useUiStore = create<UiState>((set) => ({
   layoutByWorkspace: {},
   browserUrlByWorkspace: {},
   browserVisibleByWorkspace: {},
+  activeWorktreeId: null,
 
   setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
 
@@ -80,4 +83,6 @@ export const useUiStore = create<UiState>((set) => ({
         [workspaceId]: !state.browserVisibleByWorkspace[workspaceId],
       },
     })),
+
+  setActiveWorktree: (id) => set({ activeWorktreeId: id }),
 }))
