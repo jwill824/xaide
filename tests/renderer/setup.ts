@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
 import type { Workspace, XaideAPI } from '../../src/preload/ipc-types'
 
 const stubWs: Workspace = {
@@ -26,7 +27,7 @@ const mockXaideApi: XaideAPI = {
     write: async () => undefined,
     resize: async () => undefined,
     kill: async () => undefined,
-    onData: () => () => undefined,
+    onData: vi.fn(() => () => undefined),
   },
 }
 
