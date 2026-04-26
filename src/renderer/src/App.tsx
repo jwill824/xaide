@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { IconRail, type IconRailItem } from './components/IconRail'
 import { LeftPanel } from './components/LeftPanel'
 import { MainArea } from './components/MainArea'
+import { TitleBar } from './components/TitleBar'
 
 const RAIL_DEFS = [
   { id: 'agents', icon: '⬡', label: 'Agents' },
@@ -23,10 +24,13 @@ function AppInner() {
   }))
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100">
-      <IconRail items={railItems} />
-      {activePanel === 'agents' && <LeftPanel />}
-      <MainArea />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100">
+      <TitleBar />
+      <div className="flex flex-1 min-h-0">
+        <IconRail items={railItems} />
+        {activePanel === 'agents' && <LeftPanel />}
+        <MainArea />
+      </div>
     </div>
   )
 }
