@@ -6,10 +6,10 @@ import { App } from '../../src/renderer/src/App'
 describe('App shell', () => {
   it('renders all four icon rail buttons', () => {
     render(<App />)
-    expect(screen.getByTitle('Agents')).toBeInTheDocument()
-    expect(screen.getByTitle('Tasks')).toBeInTheDocument()
-    expect(screen.getByTitle('Extensions')).toBeInTheDocument()
-    expect(screen.getByTitle('Settings')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Agents' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Extensions' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()
   })
 
   it('shows the Workspaces heading by default', () => {
@@ -25,15 +25,20 @@ describe('App shell', () => {
   it('hides the left panel when a non-agents rail item is active', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByTitle('Tasks'))
+    await user.click(screen.getByRole('button', { name: 'Tasks' }))
     expect(screen.queryByText('Workspaces')).not.toBeInTheDocument()
   })
 
   it('re-shows the left panel when Agents is clicked again', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByTitle('Tasks'))
-    await user.click(screen.getByTitle('Agents'))
+    await user.click(screen.getByRole('button', { name: 'Tasks' }))
+    await user.click(screen.getByRole('button', { name: 'Agents' }))
     expect(screen.getByText('Workspaces')).toBeInTheDocument()
+  })
+
+  it('renders workspace names from the API', async () => {
+    render(<App />)
+    expect(await screen.findByText('Mock Workspace')).toBeInTheDocument()
   })
 })

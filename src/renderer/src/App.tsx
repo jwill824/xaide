@@ -4,18 +4,14 @@ import { IconRail, type IconRailItem } from './components/IconRail'
 import { LeftPanel } from './components/LeftPanel'
 import { MainArea } from './components/MainArea'
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
-})
-
-type PanelId = 'agents' | 'tasks' | 'extensions' | 'settings'
-
-const RAIL_DEFS: Array<{ id: PanelId; icon: string; label: string }> = [
+const RAIL_DEFS = [
   { id: 'agents', icon: '⬡', label: 'Agents' },
   { id: 'tasks', icon: '☰', label: 'Tasks' },
   { id: 'extensions', icon: '⊞', label: 'Extensions' },
   { id: 'settings', icon: '⚙', label: 'Settings' },
-]
+] as const
+
+type PanelId = typeof RAIL_DEFS[number]['id']
 
 function AppInner() {
   const [activePanel, setActivePanel] = useState<PanelId>('agents')
@@ -36,6 +32,9 @@ function AppInner() {
 }
 
 export function App() {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  }))
   return (
     <QueryClientProvider client={queryClient}>
       <AppInner />

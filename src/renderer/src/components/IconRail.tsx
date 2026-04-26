@@ -18,8 +18,10 @@ export const IconRail: FC<Props> = ({ items }) => (
     {items.map((item) => (
       <button
         key={item.id}
+        type="button"
         title={item.label}
         aria-label={item.label}
+        aria-pressed={item.active}
         onClick={item.onClick}
         className={[
           'w-7 h-7 flex items-center justify-center rounded text-sm transition-colors',
