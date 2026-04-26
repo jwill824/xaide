@@ -23,10 +23,10 @@ const mockXaideApi: XaideAPI = {
     saveLayout: async () => undefined,
   },
   pty: {
-    create: async () => 'test-session-id',
+    create: vi.fn(async () => 'test-session-id'),
     write: async () => undefined,
     resize: async () => undefined,
-    kill: async () => undefined,
+    kill: vi.fn(async () => undefined),
     onData: vi.fn(() => () => undefined),
   },
 }
