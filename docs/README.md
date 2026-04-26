@@ -34,6 +34,8 @@ npm run dev
 ```
 
 > **Note:** `npm install` runs `electron-builder install-app-deps` automatically via `postinstall`, which rebuilds native modules (`better-sqlite3`, `node-pty`) for Electron. This is required before running the app.
+>
+> **If you see `Error: Electron uninstall` on `npm run dev`**, the Electron binary wasn't downloaded during install. Fix it with: `node node_modules/electron/install.js`
 
 ### Run tests
 
