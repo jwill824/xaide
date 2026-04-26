@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions } from './ipc-types'
-import { IPC_CHANNELS, PTY_CHANNELS } from './ipc-types'
+import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions } from './ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
@@ -27,6 +27,14 @@ const api: XaideAPI = {
       ipcRenderer.on(PTY_CHANNELS.DATA, handler)
       return () => ipcRenderer.removeListener(PTY_CHANNELS.DATA, handler)
     },
+  },
+  worktree: {
+    list: (workspaceId: string) =>
+      ipcRenderer.invoke(WORKTREE_CHANNELS.LIST, workspaceId),
+    create: (options: CreateWorktreeOptions) =>
+      ipcRenderer.invoke(WORKTREE_CHANNELS.CREATE, options),
+    delete: (worktreeId: string, deleteBranch = false) =>
+      ipcRenderer.invoke(WORKTREE_CHANNELS.DELETE, worktreeId, deleteBranch),
   },
 }
 

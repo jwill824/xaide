@@ -6,8 +6,10 @@ import type { RawDb } from './db/client'
 import * as schema from './db/schema'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
+import { WorktreeManager } from './worktree/WorktreeManager'
+import { HookRunner } from './worktree/HookRunner'
 import { PtyManager } from './pty/PtyManager'
-import { registerWorkspaceHandlers, registerPtyHandlers } from './ipc'
+import { registerWorkspaceHandlers, registerPtyHandlers, registerWorktreeHandlers } from './ipc'
 
 let sqlite: RawDb | null = null
 let ptyManager: PtyManager | null = null
@@ -44,9 +46,12 @@ app.whenReady().then(() => {
   const db = drizzle(sqlite, { schema })
   const configLoader = new ConfigLoader()
   const workspaceManager = new WorkspaceManager(db, configLoader)
+  const worktreeManager = new WorktreeManager(db)
+  const hookRunner = new HookRunner()
   ptyManager = new PtyManager()
 
   registerWorkspaceHandlers(workspaceManager)
+  registerWorktreeHandlers(worktreeManager, hookRunner)
   const win = createWindow()
   registerPtyHandlers(ptyManager, win.webContents)
 

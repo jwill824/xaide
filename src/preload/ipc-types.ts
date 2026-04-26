@@ -59,9 +59,45 @@ export interface PtyAPI {
   onData: (callback: (sessionId: string, data: string) => void) => () => void
 }
 
+// --- Worktree ---
+
+export const WORKTREE_CHANNELS = {
+  LIST: 'worktree:list',
+  CREATE: 'worktree:create',
+  DELETE: 'worktree:delete',
+} as const
+
+export interface WorktreeRecord {
+  id: string
+  workspaceId: string
+  repoPath: string
+  branch: string
+  baseBranch: string
+  worktreePath: string
+  status: 'active' | 'merged' | 'discarded'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateWorktreeOptions {
+  workspaceId: string
+  repoPath: string
+  label: string
+  /** Explicit branch name — pass from SandboxManager during Docker phase. */
+  branch?: string
+  baseBranch?: string
+}
+
+export interface WorktreeAPI {
+  list: (workspaceId: string) => Promise<WorktreeRecord[]>
+  create: (options: CreateWorktreeOptions) => Promise<WorktreeRecord>
+  delete: (worktreeId: string, deleteBranch?: boolean) => Promise<void>
+}
+
 export interface XaideAPI {
   workspace: WorkspaceAPI
   pty: PtyAPI
+  worktree: WorktreeAPI
 }
 
 declare global {

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
-import type { Workspace, XaideAPI } from '../../src/preload/ipc-types'
+import type { Workspace, WorktreeRecord, XaideAPI } from '../../src/preload/ipc-types'
 
 const stubWs: Workspace = {
   id: 'mock-id',
@@ -28,6 +28,21 @@ const mockXaideApi: XaideAPI = {
     resize: async () => undefined,
     kill: vi.fn(async () => undefined),
     onData: vi.fn(() => () => undefined),
+  },
+  worktree: {
+    list: vi.fn(async () => []),
+    create: vi.fn(async () => ({
+      id: 'wt-mock-1',
+      workspaceId: 'ws-mock-1',
+      repoPath: '/mock/repo',
+      branch: 'xaide/mock-abc12345',
+      baseBranch: 'HEAD',
+      worktreePath: '/home/.xaide/worktrees/ws-mock-1/xaide-mock-abc12345',
+      status: 'active' as const,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })),
+    delete: vi.fn(async () => undefined),
   },
 }
 
