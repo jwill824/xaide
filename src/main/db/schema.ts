@@ -112,3 +112,6 @@ export const worktrees = sqliteTable(
   },
   (t) => [index('idx_worktrees_workspace_id').on(t.workspaceId)],
 )
+
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+export type DrizzleDb = BetterSQLite3Database<Record<string, never>>

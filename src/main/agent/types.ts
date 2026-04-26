@@ -25,6 +25,7 @@ export interface CreateAgentSessionInput {
   worktreeId: string       // used to look up worktreePath + branch
   worktreePath: string
   branch: string
+  repoPath?: string
   taskId?: string
   cols?: number
   rows?: number
