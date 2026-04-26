@@ -6,11 +6,13 @@ import type { RawDb } from './db/client'
 import * as schema from './db/schema'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
-import { registerWorkspaceHandlers } from './ipc'
+import { PtyManager } from './pty/PtyManager'
+import { registerWorkspaceHandlers, registerPtyHandlers } from './ipc'
 
 let sqlite: RawDb | null = null
+let ptyManager: PtyManager | null = null
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -23,6 +25,7 @@ function createWindow(): void {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
+      webviewTag: true,
     },
   })
 
@@ -32,6 +35,8 @@ function createWindow(): void {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return win
 }
 
 app.whenReady().then(() => {
@@ -39,12 +44,19 @@ app.whenReady().then(() => {
   const db = drizzle(sqlite, { schema })
   const configLoader = new ConfigLoader()
   const workspaceManager = new WorkspaceManager(db, configLoader)
+  ptyManager = new PtyManager()
 
   registerWorkspaceHandlers(workspaceManager)
-  createWindow()
+  const win = createWindow()
+  registerPtyHandlers(ptyManager, win.webContents)
+
+  win.on('close', () => ptyManager?.killAll())
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      const w = createWindow()
+      if (ptyManager) registerPtyHandlers(ptyManager, w.webContents)
+    }
   })
 })
 

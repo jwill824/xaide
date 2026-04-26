@@ -82,4 +82,13 @@ export class WorkspaceManager {
     if (!this.get(id)) throw new Error(`Workspace not found: ${id}`)
     this.db.delete(workspaces).where(eq(workspaces.id, id)).run()
   }
+
+  saveLayout(id: string, layoutJson: string): void {
+    if (!this.get(id)) throw new Error(`Workspace not found: ${id}`)
+    this.db
+      .update(workspaces)
+      .set({ layoutJson, updatedAt: new Date().toISOString() })
+      .where(eq(workspaces.id, id))
+      .run()
+  }
 }

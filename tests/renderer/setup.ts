@@ -19,6 +19,14 @@ const mockXaideApi: XaideAPI = {
     get: async () => stubWs,
     update: async (id, input) => ({ ...stubWs, id, ...input }),
     delete: async () => undefined,
+    saveLayout: async () => undefined,
+  },
+  pty: {
+    create: async () => 'test-session-id',
+    write: async () => undefined,
+    resize: async () => undefined,
+    kill: async () => undefined,
+    onData: () => () => undefined,
   },
 }
 

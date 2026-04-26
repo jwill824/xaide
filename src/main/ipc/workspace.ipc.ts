@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import type { WorkspaceManager } from '../workspace/WorkspaceManager'
-import { IPC_CHANNELS } from '../../preload/ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS } from '../../preload/ipc-types'
 import type { CreateWorkspaceInput } from '../../preload/ipc-types'
 
 export function registerWorkspaceHandlers(manager: WorkspaceManager): void {
@@ -15,4 +15,8 @@ export function registerWorkspaceHandlers(manager: WorkspaceManager): void {
       manager.update(id, input),
   )
   ipcMain.handle(IPC_CHANNELS.WORKSPACE_DELETE, (_, id: string) => manager.delete(id))
+  ipcMain.handle(
+    PTY_CHANNELS.WORKSPACE_SAVE_LAYOUT,
+    (_, id: string, layoutJson: string) => manager.saveLayout(id, layoutJson),
+  )
 }
