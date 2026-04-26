@@ -94,10 +94,59 @@ export interface WorktreeAPI {
   delete: (worktreeId: string, deleteBranch?: boolean) => Promise<void>
 }
 
+// --- Agent ---
+
+export const AGENT_CHANNELS = {
+  LIST_DETECTED: 'agent:list-detected',
+  SESSION_CREATE: 'agent:session:create',
+  SESSION_LIST: 'agent:session:list',
+  SESSION_KILL: 'agent:session:kill',
+} as const
+
+export interface DetectedAgent {
+  id: string
+  name: string
+  command: string
+  args: string[]
+  installed: boolean
+  configPath: string | null
+}
+
+export interface AgentSessionRecord {
+  id: string
+  taskId: string | null
+  agentId: string
+  branch: string
+  worktreePath: string
+  ptySessionId: string | null
+  containerId: string | null
+  status: 'pending' | 'running' | 'idle' | 'finished' | 'failed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateAgentSessionInput {
+  agentId: string
+  worktreeId: string
+  worktreePath: string
+  branch: string
+  taskId?: string
+  cols?: number
+  rows?: number
+}
+
+export interface AgentAPI {
+  listDetected: () => Promise<DetectedAgent[]>
+  createSession: (input: CreateAgentSessionInput) => Promise<AgentSessionRecord>
+  listSessions: (worktreeId: string) => Promise<AgentSessionRecord[]>
+  killSession: (sessionId: string, ptySessionId: string) => Promise<void>
+}
+
 export interface XaideAPI {
   workspace: WorkspaceAPI
   pty: PtyAPI
   worktree: WorktreeAPI
+  agent: AgentAPI
 }
 
 declare global {

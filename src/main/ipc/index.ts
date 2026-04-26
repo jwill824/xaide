@@ -1,3 +1,4 @@
 export { registerWorkspaceHandlers } from './workspace.ipc'
 export { registerPtyHandlers } from './pty.ipc'
 export { registerWorktreeHandlers } from './worktree.ipc'
+export { registerAgentHandlers } from './agent.ipc'

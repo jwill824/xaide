@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions } from './ipc-types'
-import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS } from './ipc-types'
+import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI } from './ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
@@ -36,6 +36,15 @@ const api: XaideAPI = {
     delete: (worktreeId: string, deleteBranch = false) =>
       ipcRenderer.invoke(WORKTREE_CHANNELS.DELETE, worktreeId, deleteBranch),
   },
+  agent: {
+    listDetected: () => ipcRenderer.invoke(AGENT_CHANNELS.LIST_DETECTED),
+    createSession: (input: CreateAgentSessionInput) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_CREATE, input),
+    listSessions: (worktreeId: string) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_LIST, worktreeId),
+    killSession: (sessionId: string, ptySessionId: string) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId),
+  } satisfies AgentAPI,
 }
 
 contextBridge.exposeInMainWorld('xaide', api)
