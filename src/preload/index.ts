@@ -1,15 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { XaideAPI, CreateWorkspaceInput } from './ipc-types'
+import { IPC_CHANNELS } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
-    list: () => ipcRenderer.invoke('workspace:list'),
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_LIST),
     create: (input: CreateWorkspaceInput) =>
-      ipcRenderer.invoke('workspace:create', input),
-    get: (id: string) => ipcRenderer.invoke('workspace:get', id),
+      ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_CREATE, input),
+    get: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_GET, id),
     update: (id: string, input: Partial<CreateWorkspaceInput>) =>
-      ipcRenderer.invoke('workspace:update', id, input),
-    delete: (id: string) => ipcRenderer.invoke('workspace:delete', id),
+      ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_UPDATE, id, input),
+    delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_DELETE, id),
   },
 }
 

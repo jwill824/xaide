@@ -1,3 +1,11 @@
+export const IPC_CHANNELS = {
+  WORKSPACE_LIST: 'workspace:list',
+  WORKSPACE_CREATE: 'workspace:create',
+  WORKSPACE_GET: 'workspace:get',
+  WORKSPACE_UPDATE: 'workspace:update',
+  WORKSPACE_DELETE: 'workspace:delete',
+} as const
+
 export interface Workspace {
   id: string
   name: string

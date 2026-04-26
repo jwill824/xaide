@@ -68,8 +68,20 @@ describe('registerWorkspaceHandlers', () => {
     expect(mockManager.get).toHaveBeenCalledWith('ws1')
   })
 
+  it('workspace:update passes id and input to manager.update()', async () => {
+    const input = { name: 'Renamed' }
+    await handlers['workspace:update']({}, 'ws1', input)
+    expect(mockManager.update).toHaveBeenCalledWith('ws1', input)
+  })
+
   it('workspace:delete passes id to manager.delete()', async () => {
     await handlers['workspace:delete']({}, 'ws1')
     expect(mockManager.delete).toHaveBeenCalledWith('ws1')
+  })
+
+  it('workspace:create propagates manager errors as rejections', async () => {
+    vi.mocked(mockManager.create).mockRejectedValueOnce(new Error('path not found'))
+    await expect(handlers['workspace:create']({}, { name: 'x', repoPath: '/bad' }))
+      .rejects.toThrow('path not found')
   })
 })
