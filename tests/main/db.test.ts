@@ -53,4 +53,17 @@ describe('createDb', () => {
     const rows = db2.prepare(`SELECT * FROM workspaces`).all()
     expect(rows).toHaveLength(0)
   })
+
+  it('rejects invalid status values on tasks', () => {
+    const db = createDb(':memory:')
+    db.prepare(
+      `INSERT INTO workspaces (id, name, repo_path) VALUES ('ws1', 'WS', '/tmp')`,
+    ).run()
+    expect(() => {
+      db.prepare(
+        `INSERT INTO tasks (id, workspace_id, title, source_adapter, status)
+         VALUES ('t1', 'ws1', 'Task', 'markdown', 'INVALID_STATUS')`,
+      ).run()
+    }).toThrow()
+  })
 })

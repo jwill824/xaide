@@ -19,7 +19,8 @@ const SCHEMA_SQL = `
     source_adapter TEXT NOT NULL,
     methodology_adapter TEXT,
     prompt TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'pending',
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK(status IN ('pending','in_progress','done','blocked')),
     base_commit TEXT,
     parallel_group_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -33,7 +34,8 @@ const SCHEMA_SQL = `
     branch TEXT NOT NULL,
     worktree_path TEXT NOT NULL,
     container_id TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK(status IN ('pending','running','idle','finished','failed')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -49,7 +51,8 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS mcp_servers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    scope TEXT NOT NULL DEFAULT 'global',
+    scope TEXT NOT NULL DEFAULT 'global'
+      CHECK(scope IN ('global','workspace')),
     config_json TEXT NOT NULL DEFAULT '{}',
     enabled INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -63,10 +66,29 @@ const SCHEMA_SQL = `
     config_json TEXT NOT NULL DEFAULT '{}',
     installed_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE INDEX IF NOT EXISTS idx_tasks_workspace_id
+    ON tasks(workspace_id);
+
+  CREATE INDEX IF NOT EXISTS idx_agent_sessions_task_id
+    ON agent_sessions(task_id);
+
+  CREATE INDEX IF NOT EXISTS idx_events_session_id
+    ON events(session_id);
 `
 
 export type RawDb = Database.Database
 
+/**
+ * Opens (or creates) a SQLite database at `path`, applies WAL mode,
+ * enables foreign keys, and runs the bootstrap DDL.
+ *
+ * Caller owns the connection. Call `db.close()` when done.
+ * For production use, call this once at app startup and pass
+ * the instance via dependency injection.
+ *
+ * @param path - File path or `':memory:'` for an in-memory database.
+ */
 export function createDb(path: string): RawDb {
   const db = new Database(path)
   db.pragma('journal_mode = WAL')
