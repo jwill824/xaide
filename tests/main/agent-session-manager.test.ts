@@ -32,12 +32,11 @@ function makeHookRunner() {
 
 function makeMockSandbox() {
   return {
-    isDockerAvailable: vi.fn().mockReturnValue(true),
-    create: vi.fn().mockReturnValue({ containerId: 'ctr-1', image: 'node:22', worktreePath: '/tmp/wt' }),
-    start: vi.fn(),
+    isSbxAvailable: vi.fn().mockReturnValue(true),
+    create: vi.fn().mockReturnValue({ sandboxName: 'xaide-abc', worktreePath: '/tmp/wt' }),
     stop: vi.fn(),
     remove: vi.fn(),
-    execArgs: vi.fn().mockReturnValue({ command: 'docker', prefixArgs: ['exec', '-i', 'ctr-1'] }),
+    runArgs: vi.fn().mockReturnValue({ command: 'sbx', args: ['run', 'claude', '--name', 'xaide-abc'] }),
   } as unknown as SandboxManager
 }
 
@@ -87,64 +86,76 @@ describe('AgentSessionManager', () => {
   })
 })
 
-describe('AgentSessionManager sandbox integration', () => {
+describe('sandbox integration', () => {
   let db: ReturnType<typeof makeMockDb>
   let pty: ReturnType<typeof makeMockPty>
   let hookRunner: ReturnType<typeof makeHookRunner>
-  let sandbox: ReturnType<typeof makeMockSandbox>
 
   beforeEach(() => {
     db = makeMockDb()
     pty = makeMockPty()
     hookRunner = makeHookRunner()
-    sandbox = makeMockSandbox()
   })
 
-  it('create calls sandbox.create, sandbox.start, execArgs, and spawns PTY with docker/exec, and DB insert includes containerId when sandboxImage provided', async () => {
-    const returning = [{ id: 'sess-2', agentId: 'claude', branch: 'feat/y', worktreePath: '/tmp/wt', ptySessionId: 'pty-abc', taskId: null, containerId: 'ctr-1', status: 'running', createdAt: '', updatedAt: '' }]
-    db.insert = vi.fn().mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue(returning) }) })
-    const manager = new AgentSessionManager(
-      db as unknown as DrizzleDb,
-      pty as unknown as PtyManager,
-      hookRunner as unknown as HookRunner,
-      sandbox as unknown as SandboxManager,
-    )
-    await manager.create({ agentId: 'claude', worktreeId: 'wt-2', worktreePath: '/tmp/wt', branch: 'feat/y', sandboxImage: 'node:22' })
-    expect((sandbox.create as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith({ image: 'node:22', worktreePath: '/tmp/wt', branch: 'feat/y' })
-    expect((sandbox.start as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('ctr-1')
-    expect((sandbox.execArgs as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('ctr-1')
-    const ptyCall = (pty.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
-    expect(ptyCall.command).toBe('docker')
-    expect(ptyCall.args.slice(0, 4)).toEqual(['exec', '-i', 'ctr-1', 'claude'])
-    // DB insert payload includes containerId
-    const dbInsertArgs = (db.insert as ReturnType<typeof vi.fn>).mock.calls[0][0]
-    expect(dbInsertArgs).toBeDefined()
-    // The .values() call is chained, so check the .values call
-    const valuesCall = (db.insert as any).mock.results[0].value.values.mock.calls[0][0]
-    expect(valuesCall.containerId).toBe('ctr-1')
+  it('create uses sbx runArgs PTY when sandboxName provided', async () => {
+    const sandboxMock = makeMockSandbox()
+    const mgr = new AgentSessionManager(db as unknown as DrizzleDb, pty as unknown as PtyManager, hookRunner as unknown as HookRunner, sandboxMock as any)
+
+    vi.mocked(pty.create).mockReturnValue({ id: 'pty-1' } as any)
+    db.insert = vi.fn().mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{
+          id: 'sess-1', agentId: 'claude', branch: 'main',
+          worktreePath: '/tmp/wt', ptySessionId: 'pty-1',
+          containerId: 'xaide-abc', status: 'running',
+        }]),
+      }),
+    } as any)
+
+    const result = await mgr.create({
+      agentId: 'claude',
+      worktreeId: 'wt-1',
+      worktreePath: '/tmp/wt',
+      branch: 'main',
+      sandboxName: 'xaide-abc',
+    })
+
+    expect(sandboxMock.create).toHaveBeenCalledWith({ name: 'xaide-abc', worktreePath: '/tmp/wt' })
+    expect(sandboxMock.runArgs).toHaveBeenCalledWith('xaide-abc', 'claude')
+    expect(pty.create).toHaveBeenCalledWith(expect.objectContaining({
+      command: 'sbx',
+      args: ['run', 'claude', '--name', 'xaide-abc'],
+    }))
+    expect(result.containerId).toBe('xaide-abc')
   })
 
-  it('kill calls sandbox.stop when containerId provided', async () => {
-    db.update = vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) })
-    const manager = new AgentSessionManager(
-      db as unknown as DrizzleDb,
-      pty as unknown as PtyManager,
-      hookRunner as unknown as HookRunner,
-      sandbox as unknown as SandboxManager,
-    )
-    await manager.kill('sess-2', 'pty-abc', 'ctr-1')
-    expect((sandbox.stop as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('ctr-1')
+  it('kill calls sandbox.stop when sandboxName provided', async () => {
+    const sandboxMock = makeMockSandbox()
+    const mgr = new AgentSessionManager(db as unknown as DrizzleDb, pty as unknown as PtyManager, hookRunner as unknown as HookRunner, sandboxMock as any)
+
+    db.update = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    } as any)
+
+    await mgr.kill('sess-1', 'pty-1', 'xaide-abc')
+
+    expect(sandboxMock.stop).toHaveBeenCalledWith('xaide-abc')
   })
 
-  it('kill does not call sandbox.stop when containerId is not provided', async () => {
-    db.update = vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) })
-    const manager = new AgentSessionManager(
-      db as unknown as DrizzleDb,
-      pty as unknown as PtyManager,
-      hookRunner as unknown as HookRunner,
-      sandbox as unknown as SandboxManager,
-    )
-    await manager.kill('sess-2', 'pty-abc')
-    expect((sandbox.stop as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled()
+  it('kill does not call sandbox.stop when sandboxName is not provided', async () => {
+    const sandboxMock = makeMockSandbox()
+    const mgr = new AgentSessionManager(db as unknown as DrizzleDb, pty as unknown as PtyManager, hookRunner as unknown as HookRunner, sandboxMock as any)
+
+    db.update = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    } as any)
+
+    await mgr.kill('sess-1', 'pty-1')
+
+    expect(sandboxMock.stop).not.toHaveBeenCalled()
   })
 })

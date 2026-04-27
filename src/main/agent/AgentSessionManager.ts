@@ -22,31 +22,25 @@ export class AgentSessionManager {
 
   async create(input: CreateAgentSessionInput): Promise<AgentSessionRecord> {
     const id = randomUUID()
-    const agentCmd = AGENT_COMMANDS[input.agentId] ?? { command: input.agentId, args: [] }
 
-    let containerId: string | undefined
-    if (input.sandboxImage && this.sandbox) {
-      const info = this.sandbox.create({
-        image: input.sandboxImage,
+    let sandboxName: string | undefined
+    if (input.sandboxName && this.sandbox) {
+      this.sandbox.create({
+        name: input.sandboxName,
         worktreePath: input.worktreePath,
-        branch: input.branch ?? 'main',
+        // branch intentionally omitted — sbx uses worktreePath as the workspace root
       })
-      try {
-        this.sandbox.start(info.containerId)
-      } catch (err) {
-        this.sandbox.remove(info.containerId)
-        throw err
-      }
-      containerId = info.containerId
+      sandboxName = input.sandboxName
     }
 
     let ptyCommand: string
     let ptyArgs: string[]
-    if (containerId && this.sandbox) {
-      const { command, prefixArgs } = this.sandbox.execArgs(containerId)
+    if (sandboxName && this.sandbox) {
+      const { command, args } = this.sandbox.runArgs(sandboxName, input.agentId)
       ptyCommand = command
-      ptyArgs = [...prefixArgs, agentCmd.command, ...agentCmd.args]
+      ptyArgs = args
     } else {
+      const agentCmd = AGENT_COMMANDS[input.agentId] ?? { command: input.agentId, args: [] }
       ptyCommand = agentCmd.command
       ptyArgs = agentCmd.args
     }
@@ -71,13 +65,16 @@ export class AgentSessionManager {
           branch: input.branch,
           worktreePath: input.worktreePath,
           ptySessionId: ptyResult.id,
-          containerId: containerId ?? null,
+          containerId: sandboxName ?? null,   // DB column repurposed: stores sbx sandbox name
           status: 'running',
         })
         .returning()
       record = inserted as AgentSessionRecord
     } catch (err) {
       try { this.pty.kill(ptyResult.id) } catch { /* already dead */ }
+      if (sandboxName && this.sandbox) {
+        this.sandbox.remove(sandboxName)
+      }
       throw err
     }
 
@@ -97,14 +94,14 @@ export class AgentSessionManager {
     return rows as AgentSessionRecord[]
   }
 
-  async kill(sessionId: string, ptySessionId: string, containerId?: string): Promise<void> {
+  async kill(sessionId: string, ptySessionId: string, sandboxName?: string): Promise<void> {
     try {
       this.pty.kill(ptySessionId)
     } catch {
       // PTY may already be dead
     }
-    if (containerId && this.sandbox) {
-      this.sandbox.stop(containerId)
+    if (sandboxName && this.sandbox) {
+      this.sandbox.stop(sandboxName)
     }
     await this.db
       .update(agentSessions)

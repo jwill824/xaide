@@ -15,7 +15,7 @@ export function registerAgentHandlers(
 
   ipcMain.handle('agent:session:list', () => sessionManager.list())
 
-  ipcMain.handle('agent:session:kill', (_event, sessionId: string, ptySessionId: string, containerId?: string) =>
-    sessionManager.kill(sessionId, ptySessionId, containerId),
+  ipcMain.handle('agent:session:kill', (_event, sessionId: string, ptySessionId: string, sandboxName?: string) =>
+    sessionManager.kill(sessionId, ptySessionId, sandboxName),
   )
 }
