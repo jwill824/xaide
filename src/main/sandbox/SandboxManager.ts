@@ -34,6 +34,9 @@ export class SandboxManager {
     ]
     const output = execFileSync('docker', args, { stdio: 'pipe', encoding: 'utf8' })
     const containerId = output.trim()
+    if (!containerId) {
+      throw new Error('docker create returned empty container ID')
+    }
     return { containerId, image: options.image, worktreePath: options.worktreePath }
   }
 

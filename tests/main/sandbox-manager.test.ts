@@ -36,7 +36,14 @@ describe('SandboxManager', () => {
     expect(info.worktreePath).toBe('/tmp/wt')
     expect(mockExec).toHaveBeenCalledWith(
       'docker',
-      expect.arrayContaining(['create', '--rm', '-v', '/tmp/wt:/workspace', 'node:22']),
+      [
+        'create', '--rm',
+        '-v', '/tmp/wt:/workspace',
+        '-w', '/workspace',
+        '--label', 'xaide.branch=feat/x',
+        'node:22',
+        'sleep', 'infinity',
+      ],
       expect.objectContaining({ encoding: 'utf8' }),
     )
   })
@@ -56,5 +63,29 @@ describe('SandboxManager', () => {
     const result = manager.execArgs('abc123')
     expect(result.command).toBe('docker')
     expect(result.prefixArgs).toEqual(['exec', '-i', 'abc123'])
+  })
+
+  it('remove calls docker rm -f and does not throw on failure', () => {
+    mockExec.mockReturnValue('' as any)
+    expect(() => manager.remove('abc123')).not.toThrow()
+    expect(mockExec).toHaveBeenCalledWith('docker', ['rm', '-f', 'abc123'], { stdio: 'pipe' })
+  })
+
+  it('remove does not throw when docker rm -f fails', () => {
+    mockExec.mockImplementation(() => { throw new Error('no such container') })
+    expect(() => manager.remove('abc123')).not.toThrow()
+  })
+
+  it('stop calls docker stop -t 5 with the containerId', () => {
+    mockExec.mockReturnValue('' as any)
+    manager.stop('abc123')
+    expect(mockExec).toHaveBeenCalledWith('docker', ['stop', '-t', '5', 'abc123'], { stdio: 'pipe' })
+  })
+
+  it('create throws when docker create returns empty output', () => {
+    mockExec.mockReturnValue('\n' as any)
+    expect(() =>
+      manager.create({ image: 'node:22', worktreePath: '/tmp/wt', branch: 'feat/x' })
+    ).toThrow('docker create returned empty container ID')
   })
 })
