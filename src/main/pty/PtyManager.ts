@@ -38,6 +38,9 @@ export class PtyManager {
       env: { ...process.env, ...options.env } as Record<string, string>,
     })
     this.sessions.set(id, { id, workspaceId: options.workspaceId, process: ptyProcess })
+    ptyProcess.onExit(() => {
+      this.sessions.delete(id)
+    })
     return { id, process: ptyProcess }
   }
 
@@ -56,8 +59,8 @@ export class PtyManager {
   kill(id: string): void {
     const session = this.sessions.get(id)
     if (!session) throw new Error(`PTY session not found: ${id}`)
-    session.process.kill()
     this.sessions.delete(id)
+    session.process.kill()
   }
 
   has(id: string): boolean {
@@ -66,7 +69,7 @@ export class PtyManager {
 
   killAll(): void {
     for (const session of this.sessions.values()) {
-      session.process.kill()
+      try { session.process.kill() } catch { /* ignore — process may already be dead */ }
     }
     this.sessions.clear()
   }

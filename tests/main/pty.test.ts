@@ -16,6 +16,7 @@ describe('PtyManager', () => {
   let manager: PtyManager
 
   beforeEach(() => {
+    vi.clearAllMocks()
     manager = new PtyManager()
   })
 
@@ -34,9 +35,10 @@ describe('PtyManager', () => {
   })
 
   it('kills a session and removes it from the map', () => {
-    const { id } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
+    const { id, process: mockProcess } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
     manager.kill(id)
     expect(manager.has(id)).toBe(false)
+    expect(mockProcess.kill).toHaveBeenCalledOnce()
   })
 
   it('throws when killing an unknown session', () => {
@@ -44,10 +46,18 @@ describe('PtyManager', () => {
   })
 
   it('killAll removes all sessions', () => {
-    const { id: a } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
-    const { id: b } = manager.create({ workspaceId: 'ws2', cols: 80, rows: 24, cwd: '/tmp' })
+    const { id: a, process: mockA } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
+    const { id: b, process: mockB } = manager.create({ workspaceId: 'ws2', cols: 80, rows: 24, cwd: '/tmp' })
     manager.killAll()
     expect(manager.has(a)).toBe(false)
     expect(manager.has(b)).toBe(false)
+    expect(mockA.kill).toHaveBeenCalled()
+    expect(mockB.kill).toHaveBeenCalled()
+  })
+
+  it('resize delegates to process.resize with correct arguments', () => {
+    const { id, process: mockProcess } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
+    manager.resize(id, 120, 40)
+    expect(mockProcess.resize).toHaveBeenCalledWith(120, 40)
   })
 })
