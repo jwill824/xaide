@@ -77,7 +77,7 @@ export const MainArea: FC = () => {
     [activeWorkspaceId, setLayout],
   )
 
-  const handleLaunchAgent = async (agentId: string, worktreeId: string) => {
+  const handleLaunchAgent = async (agentId: string, worktreeId: string, sandboxImage?: string) => {
     const wt = worktrees.find((w) => w.id === worktreeId)
     if (!wt || !activeWorkspaceId) return
     try {
@@ -86,6 +86,7 @@ export const MainArea: FC = () => {
         worktreeId,
         worktreePath: wt.worktreePath,
         branch: wt.branch,
+        sandboxImage,
       })
       setShowLauncher(false)
       const uiRecord: AgentSessionUiRecord = {
@@ -96,6 +97,7 @@ export const MainArea: FC = () => {
         branch: record.branch,
         worktreeId,
         workspaceId: activeWorkspaceId,
+        containerId: record.containerId,
       }
       addAgentSession(uiRecord)
       addSession({
@@ -113,7 +115,7 @@ export const MainArea: FC = () => {
     async (id: string) => {
       const session = agentSessions.find((s) => s.id === id)
       if (!session) return
-      await window.xaide.agent.killSession(id, session.ptySessionId ?? '')
+      await window.xaide.agent.killSession(id, session.ptySessionId ?? '', session.containerId ?? undefined)
       removeAgentSession(id)
       await closeSession(id)
     },

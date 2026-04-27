@@ -29,4 +29,5 @@ export interface CreateAgentSessionInput {
   taskId?: string
   cols?: number
   rows?: number
+  sandboxImage?: string
 }

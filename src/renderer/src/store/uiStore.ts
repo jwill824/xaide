@@ -16,6 +16,7 @@ export interface AgentSessionUiRecord {
   branch: string
   worktreeId: string
   workspaceId: string
+  containerId?: string | null
 }
 
 interface UiState {

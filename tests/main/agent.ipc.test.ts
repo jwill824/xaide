@@ -69,6 +69,6 @@ describe('registerAgentHandlers', () => {
     registerAgentHandlers(makeRegistry(), sessionManager)
     const handler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'agent:session:kill')?.[1]
     await (handler as Function)({}, 'sess-1', 'pty-1')
-    expect(sessionManager.kill).toHaveBeenCalledWith('sess-1', 'pty-1')
+    expect(sessionManager.kill).toHaveBeenCalledWith('sess-1', 'pty-1', undefined)
   })
 })
