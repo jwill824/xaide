@@ -142,11 +142,55 @@ export interface AgentAPI {
   killSession: (sessionId: string, ptySessionId: string) => Promise<void>
 }
 
+// --- Tasks ---
+
+export const TASK_CHANNELS = {
+  LIST: 'task:list',
+  CREATE: 'task:create',
+  UPDATE: 'task:update',
+  DELETE: 'task:delete',
+} as const
+
+export interface Task {
+  id: string
+  workspaceId: string
+  title: string
+  sourceAdapter: string
+  methodologyAdapter: string | null
+  prompt: string
+  status: 'pending' | 'in_progress' | 'done' | 'blocked'
+  baseCommit: string | null
+  parallelGroupId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTaskInput {
+  workspaceId: string
+  title: string
+  prompt?: string
+  sourceAdapter?: string
+}
+
+export interface UpdateTaskInput {
+  title?: string
+  prompt?: string
+  status?: 'pending' | 'in_progress' | 'done' | 'blocked'
+}
+
+export interface TaskAPI {
+  list: (workspaceId: string) => Promise<Task[]>
+  create: (input: CreateTaskInput) => Promise<Task>
+  update: (id: string, input: UpdateTaskInput) => Promise<Task>
+  delete: (id: string) => Promise<void>
+}
+
 export interface XaideAPI {
   workspace: WorkspaceAPI
   pty: PtyAPI
   worktree: WorktreeAPI
   agent: AgentAPI
+  tasks: TaskAPI
 }
 
 declare global {

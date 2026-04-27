@@ -9,9 +9,10 @@ import { WorkspaceManager } from './workspace/WorkspaceManager'
 import { WorktreeManager } from './worktree/WorktreeManager'
 import { HookRunner } from './worktree/HookRunner'
 import { PtyManager } from './pty/PtyManager'
-import { registerWorkspaceHandlers, registerPtyHandlers, registerWorktreeHandlers, registerAgentHandlers } from './ipc'
+import { registerWorkspaceHandlers, registerPtyHandlers, registerWorktreeHandlers, registerAgentHandlers, registerTaskHandlers } from './ipc'
 import { AgentRegistry } from './agent/AgentRegistry'
 import { AgentSessionManager } from './agent/AgentSessionManager'
+import { TaskManager } from './task/TaskManager'
 
 let sqlite: RawDb | null = null
 let ptyManager: PtyManager | null = null
@@ -54,9 +55,11 @@ app.whenReady().then(() => {
   const agentRegistry = new AgentRegistry()
   const agentSessionManager = new AgentSessionManager(db, ptyManager, hookRunner)
 
+  const taskManager = new TaskManager(db)
   registerWorkspaceHandlers(workspaceManager)
   registerWorktreeHandlers(worktreeManager, hookRunner)
   registerAgentHandlers(agentRegistry, agentSessionManager)
+  registerTaskHandlers(taskManager)
   const win = createWindow()
   registerPtyHandlers(ptyManager, win.webContents)
 
