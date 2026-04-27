@@ -103,6 +103,36 @@ export const AGENT_CHANNELS = {
   SESSION_KILL: 'agent:session:kill',
 } as const
 
+// --- Sandbox ---
+
+export const SANDBOX_CHANNELS = {
+  AVAILABLE: 'sandbox:available',
+  CREATE: 'sandbox:create',
+  START: 'sandbox:start',
+  STOP: 'sandbox:stop',
+  REMOVE: 'sandbox:remove',
+} as const
+
+export interface SandboxCreateOptions {
+  image: string
+  worktreePath: string
+  branch: string
+}
+
+export interface SandboxInfo {
+  containerId: string
+  image: string
+  worktreePath: string
+}
+
+export interface SandboxAPI {
+  available: () => Promise<boolean>
+  create: (options: SandboxCreateOptions) => Promise<SandboxInfo>
+  start: (containerId: string) => Promise<void>
+  stop: (containerId: string) => Promise<void>
+  remove: (containerId: string) => Promise<void>
+}
+
 export interface DetectedAgent {
   id: string
   name: string
@@ -133,13 +163,14 @@ export interface CreateAgentSessionInput {
   taskId?: string
   cols?: number
   rows?: number
+  sandboxImage?: string
 }
 
 export interface AgentAPI {
   listDetected: () => Promise<DetectedAgent[]>
   createSession: (input: CreateAgentSessionInput) => Promise<AgentSessionRecord>
   listSessions: () => Promise<AgentSessionRecord[]>
-  killSession: (sessionId: string, ptySessionId: string) => Promise<void>
+  killSession: (sessionId: string, ptySessionId: string, containerId?: string) => Promise<void>
 }
 
 // --- Tasks ---
@@ -191,6 +222,7 @@ export interface XaideAPI {
   worktree: WorktreeAPI
   agent: AgentAPI
   tasks: TaskAPI
+  sandbox: SandboxAPI
 }
 
 declare global {

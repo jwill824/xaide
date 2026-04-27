@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI, TaskAPI } from './ipc-types'
-import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS } from './ipc-types'
+import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI, TaskAPI, SandboxAPI, SandboxCreateOptions } from './ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS, SANDBOX_CHANNELS } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
@@ -51,6 +51,13 @@ const api: XaideAPI = {
     update: (id, input) => ipcRenderer.invoke(TASK_CHANNELS.UPDATE, id, input),
     delete: (id) => ipcRenderer.invoke(TASK_CHANNELS.DELETE, id),
   } satisfies TaskAPI,
+  sandbox: {
+    available: () => ipcRenderer.invoke(SANDBOX_CHANNELS.AVAILABLE),
+    create: (options: SandboxCreateOptions) => ipcRenderer.invoke(SANDBOX_CHANNELS.CREATE, options),
+    start: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.START, containerId),
+    stop: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.STOP, containerId),
+    remove: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.REMOVE, containerId),
+  } satisfies SandboxAPI,
 }
 
 contextBridge.exposeInMainWorld('xaide', api)
