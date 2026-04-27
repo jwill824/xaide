@@ -33,9 +33,13 @@ export const TaskList: FC<Props> = ({ workspaceId }) => {
   const handleCreate = async () => {
     const title = newTitle.trim()
     if (!title) return
-    await createTask.mutateAsync({ workspaceId, title })
-    setNewTitle('')
-    setShowForm(false)
+    try {
+      await createTask.mutateAsync({ workspaceId, title })
+      setNewTitle('')
+      setShowForm(false)
+    } catch {
+      // mutation error is stored in createTask.error
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -98,8 +102,9 @@ export const TaskList: FC<Props> = ({ workspaceId }) => {
               <button
                 type="button"
                 onClick={() => handleStatusCycle(task)}
-                className={`text-[10px] shrink-0 ${STATUS_COLOR[task.status as Task['status']]} hover:opacity-70`}
+                className={`text-[10px] shrink-0 ${STATUS_COLOR[task.status]} hover:opacity-70`}
                 title={`Status: ${task.status} (click to advance)`}
+                aria-label={`Change status: ${task.status}`}
               >
                 {task.status}
               </button>

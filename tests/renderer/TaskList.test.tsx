@@ -30,15 +30,15 @@ beforeEach(() => {
 describe('TaskList', () => {
   it('renders task titles', async () => {
     renderWithQuery(<TaskList workspaceId="ws-1" />)
-    expect(await screen.findByText('Fix login bug')).toBeDefined()
-    expect(screen.getByText('Add dark mode')).toBeDefined()
+    expect(await screen.findByText('Fix login bug')).toBeInTheDocument()
+    expect(screen.getByText('Add dark mode')).toBeInTheDocument()
   })
 
   it('shows status badges', async () => {
     renderWithQuery(<TaskList workspaceId="ws-1" />)
     await screen.findByText('Fix login bug')
-    expect(screen.getByText('pending')).toBeDefined()
-    expect(screen.getByText('done')).toBeDefined()
+    expect(screen.getByText('pending')).toBeInTheDocument()
+    expect(screen.getByText('done')).toBeInTheDocument()
   })
 
   it('creates a task when form is submitted', async () => {
