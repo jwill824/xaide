@@ -67,7 +67,7 @@ export class AgentSessionManager {
     return rows as AgentSessionRecord[]
   }
 
-  async kill(sessionId: string, ptySessionId: string): Promise<void> {
+  async kill(sessionId: string, ptySessionId: string, containerId?: string): Promise<void> {
     try {
       this.pty.kill(ptySessionId)
     } catch {

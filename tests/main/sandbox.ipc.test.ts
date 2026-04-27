@@ -54,13 +54,22 @@ describe('sandbox IPC handlers', () => {
 
   it('stop handler delegates to sandbox.stop', async () => {
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.STOP)![1]
-    await handler({} as any, 'ctr123')
+    const result = await handler({} as any, 'ctr123')
     expect(mockSandbox.stop).toHaveBeenCalledWith('ctr123')
+    expect(result).toBeUndefined()
+  })
+
+  it('start handler delegates to sandbox.start', async () => {
+    const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.START)![1]
+    const result = await handler({} as any, 'ctr123')
+    expect(mockSandbox.start).toHaveBeenCalledWith('ctr123')
+    expect(result).toBeUndefined()
   })
 
   it('remove handler delegates to sandbox.remove', async () => {
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.REMOVE)![1]
-    await handler({} as any, 'ctr123')
+    const result = await handler({} as any, 'ctr123')
     expect(mockSandbox.remove).toHaveBeenCalledWith('ctr123')
+    expect(result).toBeUndefined()
   })
 })

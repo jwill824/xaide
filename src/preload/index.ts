@@ -42,8 +42,8 @@ const api: XaideAPI = {
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_CREATE, input),
     listSessions: (worktreeId: string) =>
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_LIST, worktreeId),
-    killSession: (sessionId: string, ptySessionId: string) =>
-      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId),
+    killSession: (sessionId: string, ptySessionId: string, containerId?: string) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId, containerId),
   } satisfies AgentAPI,
   tasks: {
     list: (workspaceId) => ipcRenderer.invoke(TASK_CHANNELS.LIST, workspaceId),
