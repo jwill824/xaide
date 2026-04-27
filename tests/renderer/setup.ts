@@ -70,8 +70,7 @@ const mockXaideApi: XaideAPI = {
   },
   sandbox: {
     available: vi.fn().mockResolvedValue(true),
-    create: vi.fn().mockResolvedValue({ containerId: 'ctr1', image: 'node:22', worktreePath: '/tmp/wt' }),
-    start: vi.fn().mockResolvedValue(undefined),
+    create: vi.fn().mockResolvedValue({ sandboxName: 'xaide-abc', worktreePath: '/tmp/wt' }),
     stop: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
   },

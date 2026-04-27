@@ -11,12 +11,11 @@ vi.mock('electron', () => ({
 const mockHandle = vi.mocked(ipcMain.handle)
 
 const mockSandbox: SandboxManager = {
-  isDockerAvailable: vi.fn(),
+  isSbxAvailable: vi.fn(),
   create: vi.fn(),
-  start: vi.fn(),
   stop: vi.fn(),
   remove: vi.fn(),
-  execArgs: vi.fn(),
+  runArgs: vi.fn(),
 } as unknown as SandboxManager
 
 describe('sandbox IPC handlers', () => {
@@ -25,26 +24,25 @@ describe('sandbox IPC handlers', () => {
     registerSandboxHandlers(mockSandbox)
   })
 
-  it('registers all 5 sandbox channels', () => {
+  it('registers all 4 sandbox channels', () => {
     const channels = mockHandle.mock.calls.map((c) => c[0])
     expect(channels).toContain(SANDBOX_CHANNELS.AVAILABLE)
     expect(channels).toContain(SANDBOX_CHANNELS.CREATE)
-    expect(channels).toContain(SANDBOX_CHANNELS.START)
     expect(channels).toContain(SANDBOX_CHANNELS.STOP)
     expect(channels).toContain(SANDBOX_CHANNELS.REMOVE)
   })
 
-  it('available handler delegates to sandbox.isDockerAvailable', async () => {
-    vi.mocked(mockSandbox.isDockerAvailable).mockReturnValue(true)
+  it('available handler delegates to sandbox.isSbxAvailable', async () => {
+    vi.mocked(mockSandbox.isSbxAvailable).mockReturnValue(true)
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.AVAILABLE)![1]
     const result = await handler({} as any, undefined as any)
     expect(result).toBe(true)
-    expect(mockSandbox.isDockerAvailable).toHaveBeenCalled()
+    expect(mockSandbox.isSbxAvailable).toHaveBeenCalled()
   })
 
-  it('create handler delegates to sandbox.create', async () => {
-    const options = { image: 'node:22', worktreePath: '/tmp/wt', branch: 'main' }
-    const info = { containerId: 'abc', image: 'node:22', worktreePath: '/tmp/wt' }
+  it('create handler delegates to sandbox.create and returns SandboxInfo', async () => {
+    const options = { name: 'xaide-abc', worktreePath: '/tmp/wt' }
+    const info = { sandboxName: 'xaide-abc', worktreePath: '/tmp/wt' }
     vi.mocked(mockSandbox.create).mockReturnValue(info)
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.CREATE)![1]
     const result = await handler({} as any, options)
@@ -54,22 +52,16 @@ describe('sandbox IPC handlers', () => {
 
   it('stop handler delegates to sandbox.stop', async () => {
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.STOP)![1]
-    const result = await handler({} as any, 'ctr123')
-    expect(mockSandbox.stop).toHaveBeenCalledWith('ctr123')
-    expect(result).toBeUndefined()
-  })
-
-  it('start handler delegates to sandbox.start', async () => {
-    const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.START)![1]
-    const result = await handler({} as any, 'ctr123')
-    expect(mockSandbox.start).toHaveBeenCalledWith('ctr123')
+    const result = await handler({} as any, 'xaide-abc')
+    expect(mockSandbox.stop).toHaveBeenCalledWith('xaide-abc')
     expect(result).toBeUndefined()
   })
 
   it('remove handler delegates to sandbox.remove', async () => {
     const handler = mockHandle.mock.calls.find((c) => c[0] === SANDBOX_CHANNELS.REMOVE)![1]
-    const result = await handler({} as any, 'ctr123')
-    expect(mockSandbox.remove).toHaveBeenCalledWith('ctr123')
+    const result = await handler({} as any, 'xaide-abc')
+    expect(mockSandbox.remove).toHaveBeenCalledWith('xaide-abc')
     expect(result).toBeUndefined()
   })
 })
+

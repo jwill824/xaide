@@ -83,7 +83,7 @@ export interface CreateWorktreeOptions {
   workspaceId: string
   repoPath: string
   label: string
-  /** Explicit branch name — pass from SandboxManager during Docker phase. */
+  /** Explicit branch name — passed at worktree creation time. */
   branch?: string
   baseBranch?: string
 }
@@ -108,29 +108,25 @@ export const AGENT_CHANNELS = {
 export const SANDBOX_CHANNELS = {
   AVAILABLE: 'sandbox:available',
   CREATE: 'sandbox:create',
-  START: 'sandbox:start',
   STOP: 'sandbox:stop',
   REMOVE: 'sandbox:remove',
 } as const
 
 export interface SandboxCreateOptions {
-  image: string
+  name: string
   worktreePath: string
-  branch: string
 }
 
 export interface SandboxInfo {
-  containerId: string
-  image: string
+  sandboxName: string
   worktreePath: string
 }
 
 export interface SandboxAPI {
   available: () => Promise<boolean>
   create: (options: SandboxCreateOptions) => Promise<SandboxInfo>
-  start: (containerId: string) => Promise<void>
-  stop: (containerId: string) => Promise<void>
-  remove: (containerId: string) => Promise<void>
+  stop: (sandboxName: string) => Promise<void>
+  remove: (sandboxName: string) => Promise<void>
 }
 
 export interface DetectedAgent {
@@ -163,14 +159,14 @@ export interface CreateAgentSessionInput {
   taskId?: string
   cols?: number
   rows?: number
-  sandboxImage?: string
+  sandboxName?: string
 }
 
 export interface AgentAPI {
   listDetected: () => Promise<DetectedAgent[]>
   createSession: (input: CreateAgentSessionInput) => Promise<AgentSessionRecord>
   listSessions: () => Promise<AgentSessionRecord[]>
-  killSession: (sessionId: string, ptySessionId: string, containerId?: string) => Promise<void>
+  killSession: (sessionId: string, ptySessionId: string, sandboxName?: string) => Promise<void>
 }
 
 // --- Tasks ---

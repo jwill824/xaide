@@ -42,8 +42,8 @@ const api: XaideAPI = {
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_CREATE, input),
     listSessions: (worktreeId: string) =>
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_LIST, worktreeId),
-    killSession: (sessionId: string, ptySessionId: string, containerId?: string) =>
-      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId, containerId),
+    killSession: (sessionId: string, ptySessionId: string, sandboxName?: string) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId, sandboxName),
   } satisfies AgentAPI,
   tasks: {
     list: (workspaceId) => ipcRenderer.invoke(TASK_CHANNELS.LIST, workspaceId),
@@ -54,9 +54,8 @@ const api: XaideAPI = {
   sandbox: {
     available: () => ipcRenderer.invoke(SANDBOX_CHANNELS.AVAILABLE),
     create: (options: SandboxCreateOptions) => ipcRenderer.invoke(SANDBOX_CHANNELS.CREATE, options),
-    start: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.START, containerId),
-    stop: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.STOP, containerId),
-    remove: (containerId: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.REMOVE, containerId),
+    stop: (sandboxName: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.STOP, sandboxName),
+    remove: (sandboxName: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.REMOVE, sandboxName),
   } satisfies SandboxAPI,
 }
 
