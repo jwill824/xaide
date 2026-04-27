@@ -61,4 +61,8 @@ describe('TaskManager', () => {
     const list = await manager.list(workspaceId)
     expect(list).toHaveLength(0)
   })
+
+  it('throws when deleting a nonexistent task', async () => {
+    await expect(manager.delete('does-not-exist')).rejects.toThrow('Task not found: does-not-exist')
+  })
 })

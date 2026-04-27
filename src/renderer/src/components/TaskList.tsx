@@ -85,6 +85,9 @@ export const TaskList: FC<Props> = ({ workspaceId }) => {
             onKeyDown={handleKeyDown}
             className="w-full bg-neutral-800 text-neutral-200 text-xs px-2 py-1 rounded outline-none focus:ring-1 focus:ring-neutral-600"
           />
+          {createTask.isError && (
+            <p className="text-xs text-red-400 px-2 pb-1">Failed to create task</p>
+          )}
         </div>
       )}
 

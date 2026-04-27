@@ -2,33 +2,9 @@ import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import type { DrizzleDb } from '../db/schema'
 import { tasks } from '../db/schema'
+import type { CreateTaskInput, UpdateTaskInput } from '../../preload/ipc-types'
 
-export interface Task {
-  id: string
-  workspaceId: string
-  title: string
-  sourceAdapter: string
-  methodologyAdapter: string | null
-  prompt: string
-  status: 'pending' | 'in_progress' | 'done' | 'blocked'
-  baseCommit: string | null
-  parallelGroupId: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateTaskInput {
-  workspaceId: string
-  title: string
-  prompt?: string
-  sourceAdapter?: string
-}
-
-export interface UpdateTaskInput {
-  title?: string
-  prompt?: string
-  status?: 'pending' | 'in_progress' | 'done' | 'blocked'
-}
+export type Task = typeof tasks.$inferSelect
 
 export class TaskManager {
   constructor(private db: DrizzleDb) {}
@@ -38,7 +14,7 @@ export class TaskManager {
       .select()
       .from(tasks)
       .where(eq(tasks.workspaceId, workspaceId))
-      .orderBy(tasks.createdAt) as Promise<Task[]>
+      .orderBy(tasks.createdAt)
   }
 
   async create(input: CreateTaskInput): Promise<Task> {
@@ -57,7 +33,7 @@ export class TaskManager {
         updatedAt: now,
       })
       .returning()
-    return rows[0] as Task
+    return rows[0]
   }
 
   async update(id: string, input: UpdateTaskInput): Promise<Task> {
@@ -68,10 +44,11 @@ export class TaskManager {
       .where(eq(tasks.id, id))
       .returning()
     if (rows.length === 0) throw new Error(`Task not found: ${id}`)
-    return rows[0] as Task
+    return rows[0]
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(tasks).where(eq(tasks.id, id))
+    const result = await this.db.delete(tasks).where(eq(tasks.id, id)).returning()
+    if (result.length === 0) throw new Error(`Task not found: ${id}`)
   }
 }
