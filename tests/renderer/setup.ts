@@ -54,6 +54,20 @@ const mockXaideApi: XaideAPI = {
     listSessions: vi.fn().mockResolvedValue([]),
     killSession: vi.fn().mockResolvedValue(undefined),
   },
+  tasks: {
+    list: vi.fn().mockResolvedValue([]),
+    create: vi.fn().mockResolvedValue({
+      id: 'task-1', workspaceId: 'ws-1', title: 'T', sourceAdapter: 'manual',
+      methodologyAdapter: null, prompt: '', status: 'pending',
+      baseCommit: null, parallelGroupId: null, createdAt: '', updatedAt: '',
+    }),
+    update: vi.fn().mockResolvedValue({
+      id: 'task-1', workspaceId: 'ws-1', title: 'T', sourceAdapter: 'manual',
+      methodologyAdapter: null, prompt: '', status: 'in_progress',
+      baseCommit: null, parallelGroupId: null, createdAt: '', updatedAt: '',
+    }),
+    delete: vi.fn().mockResolvedValue(undefined),
+  },
 }
 
 Object.defineProperty(window, 'xaide', {
