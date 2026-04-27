@@ -17,75 +17,72 @@ describe('SandboxManager', () => {
     vi.clearAllMocks()
   })
 
-  it('isDockerAvailable returns true when docker info succeeds', () => {
+  it('isSbxAvailable returns true when sbx --version succeeds', () => {
+    mockExec.mockReturnValue('sbx 1.0.0\n' as any)
+    expect(manager.isSbxAvailable()).toBe(true)
+    expect(mockExec).toHaveBeenCalledWith('sbx', ['--version'], { stdio: 'pipe' })
+  })
+
+  it('isSbxAvailable returns false when sbx is not installed', () => {
+    mockExec.mockImplementation(() => { throw new Error('command not found: sbx') })
+    expect(manager.isSbxAvailable()).toBe(false)
+  })
+
+  it('create calls sbx create with name and workspace and returns SandboxInfo', () => {
     mockExec.mockReturnValue('' as any)
-    expect(manager.isDockerAvailable()).toBe(true)
-    expect(mockExec).toHaveBeenCalledWith('docker', ['info'], { stdio: 'pipe' })
-  })
-
-  it('isDockerAvailable returns false when docker info throws', () => {
-    mockExec.mockImplementation(() => { throw new Error('docker not found') })
-    expect(manager.isDockerAvailable()).toBe(false)
-  })
-
-  it('create returns SandboxInfo with trimmed containerId from docker output', () => {
-    mockExec.mockReturnValue('abc123def456\n' as any)
-    const info = manager.create({ image: 'node:22', worktreePath: '/tmp/wt', branch: 'feat/x' })
-    expect(info.containerId).toBe('abc123def456')
-    expect(info.image).toBe('node:22')
+    const info = manager.create({ name: 'xaide-abc', worktreePath: '/tmp/wt' })
+    expect(info.sandboxName).toBe('xaide-abc')
     expect(info.worktreePath).toBe('/tmp/wt')
     expect(mockExec).toHaveBeenCalledWith(
-      'docker',
-      [
-        'create', '--rm',
-        '-v', '/tmp/wt:/workspace',
-        '-w', '/workspace',
-        '--label', 'xaide.branch=feat/x',
-        'node:22',
-        'sleep', 'infinity',
-      ],
-      expect.objectContaining({ encoding: 'utf8' }),
+      'sbx',
+      ['create', '--name', 'xaide-abc', '--workspace', '/tmp/wt'],
+      { stdio: 'pipe' },
     )
   })
 
-  it('start calls docker start with the containerId', () => {
+  it('create throws when sbx create fails', () => {
+    mockExec.mockImplementation(() => { throw new Error('sbx: not logged in') })
+    expect(() => manager.create({ name: 'xaide-abc', worktreePath: '/tmp/wt' }))
+      .toThrow('sbx: not logged in')
+  })
+
+  it('stop calls sbx stop with the sandbox name', () => {
     mockExec.mockReturnValue('' as any)
-    manager.start('abc123')
-    expect(mockExec).toHaveBeenCalledWith('docker', ['start', 'abc123'], { stdio: 'pipe' })
+    manager.stop('xaide-abc')
+    expect(mockExec).toHaveBeenCalledWith('sbx', ['stop', 'xaide-abc'], { stdio: 'pipe' })
   })
 
-  it('stop does not throw when docker stop fails (container already stopped)', () => {
-    mockExec.mockImplementation(() => { throw new Error('no such container') })
-    expect(() => manager.stop('abc123')).not.toThrow()
+  it('stop does not throw when sbx stop fails (sandbox already stopped)', () => {
+    mockExec.mockImplementation(() => { throw new Error('no such sandbox') })
+    expect(() => manager.stop('xaide-abc')).not.toThrow()
   })
 
-  it('execArgs returns docker exec -i prefix for the given containerId', () => {
-    const result = manager.execArgs('abc123')
-    expect(result.command).toBe('docker')
-    expect(result.prefixArgs).toEqual(['exec', '-i', 'abc123'])
-  })
-
-  it('remove calls docker rm -f and does not throw on failure', () => {
+  it('remove calls sbx rm with the sandbox name', () => {
     mockExec.mockReturnValue('' as any)
-    expect(() => manager.remove('abc123')).not.toThrow()
-    expect(mockExec).toHaveBeenCalledWith('docker', ['rm', '-f', 'abc123'], { stdio: 'pipe' })
+    manager.remove('xaide-abc')
+    expect(mockExec).toHaveBeenCalledWith('sbx', ['rm', 'xaide-abc'], { stdio: 'pipe' })
   })
 
-  it('remove does not throw when docker rm -f fails', () => {
-    mockExec.mockImplementation(() => { throw new Error('no such container') })
-    expect(() => manager.remove('abc123')).not.toThrow()
+  it('remove does not throw when sbx rm fails', () => {
+    mockExec.mockImplementation(() => { throw new Error('no such sandbox') })
+    expect(() => manager.remove('xaide-abc')).not.toThrow()
   })
 
-  it('stop calls docker stop -t 5 with the containerId', () => {
-    mockExec.mockReturnValue('' as any)
-    manager.stop('abc123')
-    expect(mockExec).toHaveBeenCalledWith('docker', ['stop', '-t', '5', 'abc123'], { stdio: 'pipe' })
+  it('runArgs returns sbx run command for claude agent', () => {
+    const result = manager.runArgs('xaide-abc', 'claude')
+    expect(result.command).toBe('sbx')
+    expect(result.args).toEqual(['run', 'claude', '--name', 'xaide-abc'])
   })
 
-  it('create throws when docker create returns empty output', () => {
-    mockExec.mockReturnValue('\n' as any)
-    expect(() =>
-      manager.create({ image: 'node:22', worktreePath: '/tmp/wt', branch: 'feat/x' })
-    ).toThrow('docker create returned empty container ID')
+  it('runArgs returns sbx run command for copilot agent', () => {
+    const result = manager.runArgs('xaide-abc', 'copilot')
+    expect(result.command).toBe('sbx')
+    expect(result.args).toEqual(['run', 'copilot', '--name', 'xaide-abc'])
+  })
+
+  it('runArgs passes through unknown agentId unchanged', () => {
+    const result = manager.runArgs('xaide-abc', 'gpt')
+    expect(result.command).toBe('sbx')
+    expect(result.args).toEqual(['run', 'gpt', '--name', 'xaide-abc'])
   })
 })

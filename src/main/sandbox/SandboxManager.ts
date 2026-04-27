@@ -1,21 +1,26 @@
 import { execFileSync } from 'node:child_process'
 
 export interface SandboxCreateOptions {
-  image: string
+  name: string
   worktreePath: string
-  branch: string
 }
 
 export interface SandboxInfo {
-  containerId: string
-  image: string
+  sandboxName: string
   worktreePath: string
 }
 
+// Forward-compatibility hook for future agent name translation (e.g. 'gpt' → 'openai').
+// Currently all entries are identity mappings; unknown agents fall through unchanged.
+const SBX_AGENT_MAP: Record<string, string> = {
+  claude: 'claude',
+  copilot: 'copilot',
+}
+
 export class SandboxManager {
-  isDockerAvailable(): boolean {
+  isSbxAvailable(): boolean {
     try {
-      execFileSync('docker', ['info'], { stdio: 'pipe' })
+      execFileSync('sbx', ['--version'], { stdio: 'pipe' })
       return true
     } catch {
       return false
@@ -23,47 +28,35 @@ export class SandboxManager {
   }
 
   create(options: SandboxCreateOptions): SandboxInfo {
-    const args = [
-      'create',
-      '--rm',
-      '-v', `${options.worktreePath}:/workspace`,
-      '-w', '/workspace',
-      '--label', `xaide.branch=${options.branch}`,
-      options.image,
-      'sleep', 'infinity',
-    ]
-    const output = execFileSync('docker', args, { stdio: 'pipe', encoding: 'utf8' })
-    const containerId = output.trim()
-    if (!containerId) {
-      throw new Error('docker create returned empty container ID')
-    }
-    return { containerId, image: options.image, worktreePath: options.worktreePath }
+    execFileSync(
+      'sbx',
+      ['create', '--name', options.name, '--workspace', options.worktreePath],
+      { stdio: 'pipe' },
+    )
+    return { sandboxName: options.name, worktreePath: options.worktreePath }
   }
 
-  start(containerId: string): void {
-    execFileSync('docker', ['start', containerId], { stdio: 'pipe' })
-  }
-
-  stop(containerId: string): void {
+  stop(sandboxName: string): void {
     try {
-      execFileSync('docker', ['stop', '-t', '5', containerId], { stdio: 'pipe' })
+      execFileSync('sbx', ['stop', sandboxName], { stdio: 'pipe' })
     } catch {
-      // Container may already be stopped or removed
+      // Sandbox may already be stopped or removed
     }
   }
 
-  remove(containerId: string): void {
+  remove(sandboxName: string): void {
     try {
-      execFileSync('docker', ['rm', '-f', containerId], { stdio: 'pipe' })
+      execFileSync('sbx', ['rm', sandboxName], { stdio: 'pipe' })
     } catch {
-      // Container may already be removed
+      // Sandbox may already be removed
     }
   }
 
-  execArgs(containerId: string): { command: string; prefixArgs: string[] } {
+  runArgs(sandboxName: string, agentId: string): { command: string; args: string[] } {
+    const sbxAgent = SBX_AGENT_MAP[agentId] ?? agentId
     return {
-      command: 'docker',
-      prefixArgs: ['exec', '-i', containerId],
+      command: 'sbx',
+      args: ['run', sbxAgent, '--name', sandboxName],
     }
   }
 }
