@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export function useDockerStatus(): { available: boolean; loading: boolean } {
+export function useSbxStatus(): { available: boolean; loading: boolean } {
   const [available, setAvailable] = useState(false)
   const [loading, setLoading] = useState(true)
 

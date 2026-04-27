@@ -1,24 +1,23 @@
 import { useState } from 'react'
 import type { FC } from 'react'
 import { useDetectedAgents } from '../hooks/useAgents'
-import { useDockerStatus } from '../hooks/useDockerStatus'
+import { useSbxStatus } from '../hooks/useSbxStatus'
 import type { WorktreeRecord } from '../../../preload/ipc-types'
 
 interface Props {
   worktrees: WorktreeRecord[]
-  onLaunch: (agentId: string, worktreeId: string, sandboxImage?: string) => void
+  onLaunch: (agentId: string, worktreeId: string, sandboxName?: string) => void
   onClose: () => void
 }
 
 export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
   const { data: agents = [] } = useDetectedAgents()
-  const { available: dockerAvailable, loading: dockerLoading } = useDockerStatus()
+  const { available: sbxAvailable, loading: sbxLoading } = useSbxStatus()
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
   const [selectedWorktree, setSelectedWorktree] = useState<string | null>(
     worktrees[0]?.id ?? null,
   )
   const [useSandbox, setUseSandbox] = useState(false)
-  const [sandboxImage, setSandboxImage] = useState('')
 
   const canLaunch = selectedAgent !== null && selectedWorktree !== null
 
@@ -84,14 +83,13 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
         </button>
         <button
           type="button"
-          disabled={!canLaunch || (useSandbox && !sandboxImage.trim())}
+          disabled={!canLaunch}
           onClick={() => {
             if (!canLaunch) return
-            if (useSandbox && sandboxImage) {
-              onLaunch(selectedAgent!, selectedWorktree!, sandboxImage)
-            } else {
-              onLaunch(selectedAgent!, selectedWorktree!)
-            }
+            const sandboxName = useSandbox
+              ? `xaide-${selectedWorktree!.slice(0, 8)}-${Date.now().toString(36)}`
+              : undefined
+            onLaunch(selectedAgent!, selectedWorktree!, sandboxName)
           }}
           className="px-3 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -99,31 +97,20 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
         </button>
       </div>
 
-      {!dockerLoading && (
+      {!sbxLoading && (
         <div className="border-t border-neutral-700 pt-2">
-          {!dockerAvailable ? (
-            <p className="text-xs text-red-400">Docker unavailable</p>
+          {!sbxAvailable ? (
+            <p className="text-xs text-red-400">sbx unavailable</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useSandbox}
-                  onChange={(e) => setUseSandbox(e.target.checked)}
-                  aria-label="Use sandbox"
-                />
-                Use sandbox
-              </label>
-              {useSandbox && (
-                <input
-                  type="text"
-                  value={sandboxImage}
-                  onChange={(e) => setSandboxImage(e.target.value)}
-                  placeholder="Docker image (e.g. node:22)"
-                  className="px-2 py-1 text-xs rounded bg-neutral-700 text-neutral-200 border border-neutral-600 placeholder-neutral-500"
-                />
-              )}
-            </div>
+            <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useSandbox}
+                onChange={(e) => setUseSandbox(e.target.checked)}
+                aria-label="Use sandbox"
+              />
+              Use sandbox
+            </label>
           )}
         </div>
       )}

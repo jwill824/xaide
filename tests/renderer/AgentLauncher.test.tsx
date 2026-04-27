@@ -46,7 +46,7 @@ describe('AgentLauncher', () => {
     fireEvent.click(screen.getByText('Claude Code'))
     fireEvent.click(screen.getByText('feat/auth'))
     fireEvent.click(screen.getByRole('button', { name: /launch/i }))
-    await waitFor(() => expect(onLaunch).toHaveBeenCalledWith('claude', 'wt-1'))
+    await waitFor(() => expect(onLaunch).toHaveBeenCalledWith('claude', 'wt-1', undefined))
   })
 
   it('calls onClose when Cancel is clicked', async () => {
@@ -72,36 +72,46 @@ describe('AgentLauncher', () => {
     expect(screen.getByText('Launch')).toBeDisabled()
   })
 
-  it('shows Docker unavailable indicator when Docker is not running', async () => {
+  it('shows sbx unavailable indicator when sbx is not installed', async () => {
     vi.mocked(window.xaide.sandbox.available).mockResolvedValue(false)
-    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={onLaunch} onClose={onClose} />, { wrapper })
-    expect(await screen.findByText(/docker unavailable/i)).toBeInTheDocument()
+    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={vi.fn()} onClose={vi.fn()} />, { wrapper })
+    expect(await screen.findByText(/sbx unavailable/i)).toBeInTheDocument()
   })
 
-  it('shows sandbox toggle when Docker is available', async () => {
+  it('shows sandbox toggle when sbx is available', async () => {
     vi.mocked(window.xaide.sandbox.available).mockResolvedValue(true)
-    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={onLaunch} onClose={onClose} />, { wrapper })
+    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={vi.fn()} onClose={vi.fn()} />, { wrapper })
     expect(await screen.findByRole('checkbox', { name: /use sandbox/i })).toBeInTheDocument()
   })
 
-  it('passes sandboxImage to onLaunch when sandbox is enabled and image is set', async () => {
+  it('passes auto-generated sandboxName to onLaunch when sandbox is enabled', async () => {
     vi.mocked(window.xaide.sandbox.available).mockResolvedValue(true)
-    const launchFn = vi.fn()
-    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={launchFn} onClose={onClose} />, { wrapper })
+    const onLaunch = vi.fn()
+    render(
+      <AgentLauncher
+        worktrees={mockWorktrees}
+        onLaunch={onLaunch}
+        onClose={vi.fn()}
+      />,
+      { wrapper },
+    )
 
-    await waitFor(() => screen.getByText('Claude Code'))
-    fireEvent.click(screen.getByText('Claude Code'))
-    fireEvent.click(screen.getByText('feat/auth'))
+    // Select an agent (find the first installed agent button)
+    const agentBtn = await screen.findByRole('button', { name: /claude/i })
+    await userEvent.click(agentBtn)
 
+    // Enable sandbox
     const toggle = await screen.findByRole('checkbox', { name: /use sandbox/i })
     await userEvent.click(toggle)
 
-    const imageInput = screen.getByPlaceholderText(/docker image/i)
-    await userEvent.clear(imageInput)
-    await userEvent.type(imageInput, 'node:22')
+    // Click Launch
+    const launchBtn = screen.getByRole('button', { name: /launch/i })
+    await userEvent.click(launchBtn)
 
-    fireEvent.click(screen.getByRole('button', { name: /launch/i }))
-
-    expect(launchFn).toHaveBeenCalledWith('claude', 'wt-1', 'node:22')
+    expect(onLaunch).toHaveBeenCalledWith(
+      expect.any(String),  // agentId
+      expect.any(String),  // worktreeId
+      expect.stringMatching(/^xaide-/),  // auto-generated sandbox name
+    )
   })
 })
