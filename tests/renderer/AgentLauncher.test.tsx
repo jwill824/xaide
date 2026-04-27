@@ -71,4 +71,37 @@ describe('AgentLauncher', () => {
 
     expect(screen.getByText('Launch')).toBeDisabled()
   })
+
+  it('shows Docker unavailable indicator when Docker is not running', async () => {
+    vi.mocked(window.xaide.sandbox.available).mockResolvedValue(false)
+    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={onLaunch} onClose={onClose} />, { wrapper })
+    expect(await screen.findByText(/docker unavailable/i)).toBeInTheDocument()
+  })
+
+  it('shows sandbox toggle when Docker is available', async () => {
+    vi.mocked(window.xaide.sandbox.available).mockResolvedValue(true)
+    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={onLaunch} onClose={onClose} />, { wrapper })
+    expect(await screen.findByRole('checkbox', { name: /use sandbox/i })).toBeInTheDocument()
+  })
+
+  it('passes sandboxImage to onLaunch when sandbox is enabled and image is set', async () => {
+    vi.mocked(window.xaide.sandbox.available).mockResolvedValue(true)
+    const launchFn = vi.fn()
+    render(<AgentLauncher worktrees={mockWorktrees} onLaunch={launchFn} onClose={onClose} />, { wrapper })
+
+    await waitFor(() => screen.getByText('Claude Code'))
+    fireEvent.click(screen.getByText('Claude Code'))
+    fireEvent.click(screen.getByText('feat/auth'))
+
+    const toggle = await screen.findByRole('checkbox', { name: /use sandbox/i })
+    await userEvent.click(toggle)
+
+    const imageInput = screen.getByPlaceholderText(/docker image/i)
+    await userEvent.clear(imageInput)
+    await userEvent.type(imageInput, 'node:22')
+
+    fireEvent.click(screen.getByRole('button', { name: /launch/i }))
+
+    expect(launchFn).toHaveBeenCalledWith('claude', 'wt-1', 'node:22')
+  })
 })
