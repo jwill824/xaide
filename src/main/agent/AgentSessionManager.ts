@@ -31,7 +31,12 @@ export class AgentSessionManager {
         worktreePath: input.worktreePath,
         branch: input.branch ?? 'main',
       })
-      this.sandbox.start(info.containerId)
+      try {
+        this.sandbox.start(info.containerId)
+      } catch (err) {
+        this.sandbox.remove(info.containerId)
+        throw err
+      }
       containerId = info.containerId
     }
 

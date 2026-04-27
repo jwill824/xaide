@@ -100,7 +100,7 @@ describe('AgentSessionManager sandbox integration', () => {
     sandbox = makeMockSandbox()
   })
 
-  it('create calls sandbox.create and sandbox.start when sandboxImage provided', async () => {
+  it('create calls sandbox.create, sandbox.start, execArgs, and spawns PTY with docker/exec, and DB insert includes containerId when sandboxImage provided', async () => {
     const returning = [{ id: 'sess-2', agentId: 'claude', branch: 'feat/y', worktreePath: '/tmp/wt', ptySessionId: 'pty-abc', taskId: null, containerId: 'ctr-1', status: 'running', createdAt: '', updatedAt: '' }]
     db.insert = vi.fn().mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue(returning) }) })
     const manager = new AgentSessionManager(
@@ -112,7 +112,16 @@ describe('AgentSessionManager sandbox integration', () => {
     await manager.create({ agentId: 'claude', worktreeId: 'wt-2', worktreePath: '/tmp/wt', branch: 'feat/y', sandboxImage: 'node:22' })
     expect((sandbox.create as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith({ image: 'node:22', worktreePath: '/tmp/wt', branch: 'feat/y' })
     expect((sandbox.start as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('ctr-1')
-    expect((pty.create as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({ command: 'docker', args: ['exec', '-i', 'ctr-1', 'claude'] })
+    expect((sandbox.execArgs as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('ctr-1')
+    const ptyCall = (pty.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(ptyCall.command).toBe('docker')
+    expect(ptyCall.args.slice(0, 4)).toEqual(['exec', '-i', 'ctr-1', 'claude'])
+    // DB insert payload includes containerId
+    const dbInsertArgs = (db.insert as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(dbInsertArgs).toBeDefined()
+    // The .values() call is chained, so check the .values call
+    const valuesCall = (db.insert as any).mock.results[0].value.values.mock.calls[0][0]
+    expect(valuesCall.containerId).toBe('ctr-1')
   })
 
   it('kill calls sandbox.stop when containerId provided', async () => {
