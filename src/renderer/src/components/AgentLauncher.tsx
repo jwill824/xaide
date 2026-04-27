@@ -84,7 +84,7 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
         </button>
         <button
           type="button"
-          disabled={!canLaunch}
+          disabled={!canLaunch || (useSandbox && !sandboxImage.trim())}
           onClick={() => {
             if (!canLaunch) return
             if (useSandbox && sandboxImage) {

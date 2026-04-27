@@ -5,10 +5,11 @@ export function useDockerStatus(): { available: boolean; loading: boolean } {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    window.xaide.sandbox.available().then((result) => {
-      setAvailable(result)
-      setLoading(false)
-    })
+    window.xaide.sandbox
+      .available()
+      .then((result) => setAvailable(result))
+      .catch(() => setAvailable(false))
+      .finally(() => setLoading(false))
   }, [])
 
   return { available, loading }
