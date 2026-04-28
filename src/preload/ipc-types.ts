@@ -312,8 +312,7 @@ export interface UpdateMcpServerInput {
 }
 
 export interface SettingsAPI {
-  getGlobalAgentConfig: () => Promise<AgentConfigRecord | null>
-  getWorkspaceAgentConfig: (workspaceId: string) => Promise<AgentConfigRecord | null>
+  getAgentConfigs: (workspaceId: string | null) => Promise<AgentConfigRecord[]>
   upsertAgentConfig: (input: UpsertAgentConfigInput) => Promise<AgentConfigRecord>
   readClaudeConfig: (repoPath: string) => Promise<AgentFileContent>
   writeClaudeConfig: (repoPath: string, xaideContent: string) => Promise<void>

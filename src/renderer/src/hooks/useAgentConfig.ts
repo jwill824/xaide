@@ -6,13 +6,7 @@ export function useAgentConfig(workspaceId: string | null) {
 
   const { data: configs = [] } = useQuery({
     queryKey: ['agentConfigs', workspaceId],
-    queryFn: async () => {
-      const global = await window.xaide.settings.getGlobalAgentConfig()
-      const workspace = workspaceId
-        ? await window.xaide.settings.getWorkspaceAgentConfig(workspaceId)
-        : null
-      return [global, workspace].filter(Boolean)
-    },
+    queryFn: () => window.xaide.settings.getAgentConfigs(workspaceId),
   })
 
   const globalConfig = configs.find((c) => c?.scope === 'global') ?? null
