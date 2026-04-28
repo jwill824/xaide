@@ -92,6 +92,37 @@ const SCHEMA_SQL = `
 
   CREATE INDEX IF NOT EXISTS idx_worktrees_workspace_id
     ON worktrees(workspace_id);
+
+  CREATE TABLE IF NOT EXISTS agent_configs (
+    id TEXT PRIMARY KEY,
+    scope TEXT NOT NULL DEFAULT 'global'
+      CHECK(scope IN ('global','workspace')),
+    workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
+    agent_type TEXT NOT NULL DEFAULT 'all'
+      CHECK(agent_type IN ('claude','copilot','all')),
+    system_prompt_additions TEXT NOT NULL DEFAULT '',
+    config_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS hooks (
+    id TEXT PRIMARY KEY,
+    scope TEXT NOT NULL DEFAULT 'global'
+      CHECK(scope IN ('global','workspace')),
+    workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
+    event TEXT NOT NULL
+      CHECK(event IN ('agent.start','agent.stop','agent.commit','agent.error')),
+    command TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_agent_configs_workspace_id
+    ON agent_configs(workspace_id);
+
+  CREATE INDEX IF NOT EXISTS idx_hooks_workspace_id
+    ON hooks(workspace_id);
 `
 
 export type RawDb = Database.Database

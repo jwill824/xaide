@@ -115,6 +115,37 @@ export const worktrees = sqliteTable(
 
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 
+export const agentConfigs = sqliteTable(
+  'agent_configs',
+  {
+    id: text('id').primaryKey(),
+    scope: text('scope', { enum: ['global', 'workspace'] }).notNull().default('global'),
+    workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+    agentType: text('agent_type', { enum: ['claude', 'copilot', 'all'] }).notNull().default('all'),
+    systemPromptAdditions: text('system_prompt_additions').notNull().default(''),
+    configJson: text('config_json').notNull().default('{}'),
+    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+    updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+  },
+  (t) => [index('idx_agent_configs_workspace_id').on(t.workspaceId)],
+)
+
+export const hooks = sqliteTable(
+  'hooks',
+  {
+    id: text('id').primaryKey(),
+    scope: text('scope', { enum: ['global', 'workspace'] }).notNull().default('global'),
+    workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+    event: text('event', {
+      enum: ['agent.start', 'agent.stop', 'agent.commit', 'agent.error'],
+    }).notNull(),
+    command: text('command').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  },
+  (t) => [index('idx_hooks_workspace_id').on(t.workspaceId)],
+)
+
 export const dbSchema = {
   workspaces,
   tasks,
@@ -123,5 +154,7 @@ export const dbSchema = {
   mcpServers,
   plugins,
   worktrees,
+  agentConfigs,
+  hooks,
 }
 export type DrizzleDb = BetterSQLite3Database<typeof dbSchema>
