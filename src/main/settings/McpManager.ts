@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { eq, isNull, or } from 'drizzle-orm'
 import { writeFile, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { DrizzleDb } from '../db/schema'
@@ -19,14 +19,13 @@ export class McpManager {
   constructor(private db: DrizzleDb) {}
 
   async list(workspaceId?: string): Promise<McpServer[]> {
-    const all = await this.db.select().from(mcpServers)
-    if (!workspaceId) return all.filter((s) => s.scope === 'global')
-    return all.filter(
-      (s) =>
-        s.scope === 'global' ||
-        (s.scope === 'workspace' &&
-          (JSON.parse(s.configJson) as McpServerConfig).workspaceId === workspaceId),
-    )
+    if (workspaceId) {
+      return this.db
+        .select()
+        .from(mcpServers)
+        .where(or(isNull(mcpServers.workspaceId), eq(mcpServers.workspaceId, workspaceId)))
+    }
+    return this.db.select().from(mcpServers).where(isNull(mcpServers.workspaceId))
   }
 
   async create(input: {
@@ -40,6 +39,7 @@ export class McpManager {
         id: randomUUID(),
         name: input.name,
         scope: input.scope,
+        workspaceId: input.config.workspaceId ?? null,
         configJson: JSON.stringify(input.config),
         enabled: true,
         createdAt: new Date().toISOString(),
@@ -102,7 +102,7 @@ export class McpManager {
     for (const s of servers) {
       const cfg = JSON.parse(s.configJson) as McpServerConfig
       inputs[s.name] = cfg.url
-        ? { type: 'sse', url: cfg.url }
+        ? { type: 'sse', url: cfg.url, ...(cfg.env ? { env: cfg.env } : {}) }
         : { type: 'stdio', command: cfg.command!, args: cfg.args ?? [] }
     }
     await mkdir(join(repoPath, '.vscode'), { recursive: true })

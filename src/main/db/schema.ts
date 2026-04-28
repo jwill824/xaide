@@ -83,6 +83,7 @@ export const mcpServers = sqliteTable('mcp_servers', {
   configJson: text('config_json').notNull().default('{}'),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
 })
 
 export const plugins = sqliteTable('plugins', {

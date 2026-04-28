@@ -56,7 +56,8 @@ const SCHEMA_SQL = `
       CHECK(scope IN ('global','workspace')),
     config_json TEXT NOT NULL DEFAULT '{}',
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS plugins (
@@ -142,5 +143,10 @@ export function createDb(path: string): RawDb {
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
   db.exec(SCHEMA_SQL)
+  try {
+    db.exec('ALTER TABLE mcp_servers ADD COLUMN workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE')
+  } catch {
+    // column already exists — safe to ignore
+  }
   return db
 }

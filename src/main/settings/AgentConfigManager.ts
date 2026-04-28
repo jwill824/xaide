@@ -109,7 +109,9 @@ export class AgentConfigManager {
   private _parseMarkers(content: string): { external: string; xaideManaged: string } {
     const startIdx = content.indexOf(XAIDE_START)
     const endIdx = content.indexOf(XAIDE_END)
-    if (startIdx === -1 || endIdx === -1) return { external: content.trim(), xaideManaged: '' }
+    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+      return { external: content.trim(), xaideManaged: '' }
+    }
     const external = content.slice(0, startIdx).trim()
     const xaideManaged = content.slice(startIdx + XAIDE_START.length, endIdx).trim()
     return { external, xaideManaged }
