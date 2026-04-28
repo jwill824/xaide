@@ -15,8 +15,7 @@ export const HooksSection: FC<{ workspaceId: string | null }> = ({ workspaceId }
     createHook({
       event,
       command,
-      scope: workspaceId ? 'workspace' : 'global',
-      ...(workspaceId ? { workspaceId } : {}),
+      workspaceId: workspaceId ?? null,
     })
     setEvent('agent.start')
     setCommand('')

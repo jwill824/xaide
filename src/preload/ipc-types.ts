@@ -270,8 +270,8 @@ export interface HookRecord {
 }
 
 export interface CreateHookInput {
-  scope: 'global' | 'workspace'
-  workspaceId?: string
+  scope?: 'global' | 'workspace'
+  workspaceId?: string | null
   event: 'agent.start' | 'agent.stop' | 'agent.commit' | 'agent.error'
   command: string
 }

@@ -69,7 +69,7 @@ describe('HooksSection', () => {
       expect(window.xaide.settings.createHook).toHaveBeenCalledWith({
         event: 'agent.start',
         command: 'npm run build',
-        scope: 'global',
+        workspaceId: null,
       })
     })
   })
