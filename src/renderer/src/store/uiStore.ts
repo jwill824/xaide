@@ -71,7 +71,23 @@ export const useUiStore = create<UiState>((set) => ({
     })),
 
   removeSession: (id) =>
-    set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) })),
+    set((state) => {
+      const removed = state.sessions.find((s) => s.id === id)
+      const remaining = state.sessions.filter((s) => s.id !== id)
+      const activeSessionIdByWorkspace = { ...state.activeSessionIdByWorkspace }
+      if (removed) {
+        const wsId = removed.workspaceId
+        if (activeSessionIdByWorkspace[wsId] === id) {
+          const next = remaining.find((s) => s.workspaceId === wsId)
+          if (next) {
+            activeSessionIdByWorkspace[wsId] = next.id
+          } else {
+            delete activeSessionIdByWorkspace[wsId]
+          }
+        }
+      }
+      return { sessions: remaining, activeSessionIdByWorkspace }
+    }),
 
   setActiveSession: (workspaceId, sessionId) =>
     set((state) => ({
@@ -95,7 +111,7 @@ export const useUiStore = create<UiState>((set) => ({
     set((state) => ({
       browserVisibleByWorkspace: {
         ...state.browserVisibleByWorkspace,
-        [workspaceId]: !state.browserVisibleByWorkspace[workspaceId],
+        [workspaceId]: !(state.browserVisibleByWorkspace[workspaceId] ?? false),
       },
     })),
 
