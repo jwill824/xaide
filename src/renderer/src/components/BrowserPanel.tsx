@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   url: string
@@ -8,6 +8,10 @@ interface Props {
 export function BrowserPanel({ url, onUrlChange }: Props) {
   const [inputUrl, setInputUrl] = useState(url)
   const webviewRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    setInputUrl(url)
+  }, [url])
 
   const navigate = () => {
     const target = inputUrl.startsWith('http') ? inputUrl : `https://${inputUrl}`

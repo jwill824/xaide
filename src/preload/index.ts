@@ -27,6 +27,11 @@ const api: XaideAPI = {
       ipcRenderer.on(PTY_CHANNELS.DATA, handler)
       return () => ipcRenderer.removeListener(PTY_CHANNELS.DATA, handler)
     },
+    onExit: (cb: (sessionId: string) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, sessionId: string) => cb(sessionId)
+      ipcRenderer.on(PTY_CHANNELS.EXIT, handler)
+      return () => ipcRenderer.removeListener(PTY_CHANNELS.EXIT, handler)
+    },
   },
   worktree: {
     list: (workspaceId: string) =>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { FC } from 'react'
 import { useUiStore } from '../store/uiStore'
 import { useActiveWorkspace } from '../hooks/useActiveWorkspace'
@@ -68,11 +68,16 @@ export const MainArea: FC = () => {
     [removeSession],
   )
 
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const handleLayoutChange = useCallback(
     (node: PaneNode) => {
       if (!activeWorkspaceId) return
       setLayout(activeWorkspaceId, node)
-      window.xaide.workspace.saveLayout(activeWorkspaceId, JSON.stringify(node))
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(() => {
+        window.xaide.workspace.saveLayout(activeWorkspaceId, JSON.stringify(node))
+      }, 300)
     },
     [activeWorkspaceId, setLayout],
   )
@@ -117,9 +122,15 @@ export const MainArea: FC = () => {
       if (!session) return
       await window.xaide.agent.killSession(id, session.ptySessionId ?? '', session.sandboxName ?? undefined)
       removeAgentSession(id)
-      await closeSession(id)
+      // Find the shell session corresponding to this agent session
+      const shellSession = allSessions.find(
+        (s) => s.id === (session.ptySessionId ?? session.id)
+      )
+      if (shellSession) {
+        await closeSession(shellSession.id)
+      }
     },
-    [agentSessions, removeAgentSession, closeSession],
+    [agentSessions, allSessions, removeAgentSession, closeSession],
   )
 
   const handleCloseSession = useCallback(

@@ -28,6 +28,7 @@ const mockXaideApi: XaideAPI = {
     resize: vi.fn(async () => undefined),
     kill: vi.fn(async () => undefined),
     onData: vi.fn(() => () => undefined),
+    onExit: vi.fn(() => () => undefined),
   },
   worktree: {
     list: vi.fn(async () => []),

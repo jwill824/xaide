@@ -72,21 +72,28 @@ export const useUiStore = create<UiState>((set) => ({
 
   removeSession: (id) =>
     set((state) => {
-      const removed = state.sessions.find((s) => s.id === id)
+      const target = state.sessions.find((s) => s.id === id)
+      if (!target) return state
+      const wsId = target.workspaceId
       const remaining = state.sessions.filter((s) => s.id !== id)
+
       const activeSessionIdByWorkspace = { ...state.activeSessionIdByWorkspace }
-      if (removed) {
-        const wsId = removed.workspaceId
-        if (activeSessionIdByWorkspace[wsId] === id) {
-          const next = remaining.find((s) => s.workspaceId === wsId)
-          if (next) {
-            activeSessionIdByWorkspace[wsId] = next.id
-          } else {
-            delete activeSessionIdByWorkspace[wsId]
-          }
+      if (activeSessionIdByWorkspace[wsId] === id) {
+        const next = remaining.find((s) => s.workspaceId === wsId)
+        if (next) {
+          activeSessionIdByWorkspace[wsId] = next.id
+        } else {
+          delete activeSessionIdByWorkspace[wsId]
         }
       }
-      return { sessions: remaining, activeSessionIdByWorkspace }
+
+      // Clear stale layout when last session for this workspace is removed
+      const layoutByWorkspace = { ...state.layoutByWorkspace }
+      if (!remaining.some((s) => s.workspaceId === wsId)) {
+        delete layoutByWorkspace[wsId]
+      }
+
+      return { sessions: remaining, activeSessionIdByWorkspace, layoutByWorkspace }
     }),
 
   setActiveSession: (workspaceId, sessionId) =>

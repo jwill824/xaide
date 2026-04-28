@@ -30,6 +30,12 @@ export function TerminalPane({ sessionId, onReady }: Props) {
       if (id === sessionId) term.write(data)
     })
 
+    const unsubExit = window.xaide.pty.onExit((exitedId) => {
+      if (exitedId === sessionId) {
+        term.write('\r\n[Process exited]\r\n')
+      }
+    })
+
     term.onData((data) => {
       window.xaide.pty.write(sessionId, data)
     })
@@ -44,6 +50,7 @@ export function TerminalPane({ sessionId, onReady }: Props) {
 
     return () => {
       unsub()
+      unsubExit()
       ro.disconnect()
       term.dispose()
     }

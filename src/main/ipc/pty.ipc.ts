@@ -12,16 +12,23 @@ export function registerPtyHandlers(manager: PtyManager, webContents: WebContent
         webContents.send(PTY_CHANNELS.DATA, id, data)
       }
     })
+    process.onExit(() => {
+      if (!webContents.isDestroyed()) {
+        webContents.send(PTY_CHANNELS.EXIT, id)
+      }
+    })
     return id
   })
 
   ipcMain.handle(PTY_CHANNELS.WRITE, (_, sessionId: string, data: string): void => {
+    if (!manager.has(sessionId)) return
     manager.write(sessionId, data)
   })
 
   ipcMain.handle(
     PTY_CHANNELS.RESIZE,
     (_, sessionId: string, cols: number, rows: number): void => {
+      if (!manager.has(sessionId)) return
       manager.resize(sessionId, cols, rows)
     },
   )

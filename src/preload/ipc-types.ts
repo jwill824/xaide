@@ -39,6 +39,7 @@ export const PTY_CHANNELS = {
   RESIZE: 'pty:resize',
   KILL: 'pty:kill',
   DATA: 'pty:data',
+  EXIT: 'pty:exit',
   WORKSPACE_SAVE_LAYOUT: 'workspace:save-layout',
 } as const
 
@@ -57,6 +58,8 @@ export interface PtyAPI {
   kill: (sessionId: string) => Promise<void>
   /** Subscribe to PTY data events. Returns an unsubscribe function. */
   onData: (callback: (sessionId: string, data: string) => void) => () => void
+  /** Subscribe to PTY exit events. Returns an unsubscribe function. */
+  onExit: (callback: (sessionId: string) => void) => () => void
 }
 
 // --- Worktree ---

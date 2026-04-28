@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import * as nodePty from 'node-pty'
 import { PtyManager } from '../../src/main/pty/PtyManager'
 
 vi.mock('node-pty', () => ({
@@ -59,5 +60,14 @@ describe('PtyManager', () => {
     const { id, process: mockProcess } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
     manager.resize(id, 120, 40)
     expect(mockProcess.resize).toHaveBeenCalledWith(120, 40)
+  })
+
+  it('removes session from map when process exits naturally', () => {
+    const { id } = manager.create({ workspaceId: 'ws1', cols: 80, rows: 24, cwd: '/tmp' })
+    expect(manager.has(id)).toBe(true)
+    const mockProcess = (nodePty.spawn as ReturnType<typeof vi.fn>).mock.results.at(-1)?.value
+    const [[onExitCb]] = (mockProcess.onExit as ReturnType<typeof vi.fn>).mock.calls
+    onExitCb()
+    expect(manager.has(id)).toBe(false)
   })
 })
