@@ -215,6 +215,122 @@ export interface TaskAPI {
   delete: (id: string) => Promise<void>
 }
 
+export const SETTINGS_CHANNELS = {
+  AGENT_CONFIG_GET_GLOBAL: 'settings:agent-config:get-global',
+  AGENT_CONFIG_GET_WORKSPACE: 'settings:agent-config:get-workspace',
+  AGENT_CONFIG_UPSERT: 'settings:agent-config:upsert',
+  AGENT_CONFIG_READ_CLAUDE: 'settings:agent-config:read-claude',
+  AGENT_CONFIG_WRITE_CLAUDE: 'settings:agent-config:write-claude',
+  AGENT_CONFIG_READ_COPILOT: 'settings:agent-config:read-copilot',
+  AGENT_CONFIG_WRITE_COPILOT: 'settings:agent-config:write-copilot',
+  HOOKS_LIST: 'settings:hooks:list',
+  HOOKS_CREATE: 'settings:hooks:create',
+  HOOKS_UPDATE: 'settings:hooks:update',
+  HOOKS_DELETE: 'settings:hooks:delete',
+  MCP_LIST: 'settings:mcp:list',
+  MCP_CREATE: 'settings:mcp:create',
+  MCP_UPDATE: 'settings:mcp:update',
+  MCP_DELETE: 'settings:mcp:delete',
+  MCP_WRITE_CLAUDE: 'settings:mcp:write-claude',
+  MCP_WRITE_COPILOT: 'settings:mcp:write-copilot',
+} as const
+
+export interface AgentConfigRecord {
+  id: string
+  scope: 'global' | 'workspace'
+  workspaceId: string | null
+  agentType: 'claude' | 'copilot' | 'all'
+  systemPromptAdditions: string
+  configJson: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UpsertAgentConfigInput {
+  scope: 'global' | 'workspace'
+  workspaceId?: string
+  agentType?: 'claude' | 'copilot' | 'all'
+  systemPromptAdditions?: string
+  configJson?: string
+}
+
+export interface AgentFileContent {
+  external: string
+  xaideManaged: string
+}
+
+export interface HookRecord {
+  id: string
+  scope: 'global' | 'workspace'
+  workspaceId: string | null
+  event: 'agent.start' | 'agent.stop' | 'agent.commit' | 'agent.error'
+  command: string
+  enabled: boolean
+  createdAt: string
+}
+
+export interface CreateHookInput {
+  scope: 'global' | 'workspace'
+  workspaceId?: string
+  event: 'agent.start' | 'agent.stop' | 'agent.commit' | 'agent.error'
+  command: string
+}
+
+export interface UpdateHookInput {
+  command?: string
+  enabled?: boolean
+}
+
+export interface McpServerRecord {
+  id: string
+  name: string
+  scope: 'global' | 'workspace'
+  workspaceId: string | null
+  configJson: string
+  enabled: boolean
+  createdAt: string
+}
+
+export interface McpServerConfigInput {
+  command?: string
+  url?: string
+  args?: string[]
+  env?: Record<string, string>
+  workspaceId?: string
+}
+
+export interface CreateMcpServerInput {
+  name: string
+  scope: 'global' | 'workspace'
+  config: McpServerConfigInput
+}
+
+export interface UpdateMcpServerInput {
+  name?: string
+  config?: McpServerConfigInput
+  enabled?: boolean
+}
+
+export interface SettingsAPI {
+  getGlobalAgentConfig: () => Promise<AgentConfigRecord | null>
+  getWorkspaceAgentConfig: (workspaceId: string) => Promise<AgentConfigRecord | null>
+  upsertAgentConfig: (input: UpsertAgentConfigInput) => Promise<AgentConfigRecord>
+  readClaudeConfig: (repoPath: string) => Promise<AgentFileContent>
+  writeClaudeConfig: (repoPath: string, xaideContent: string) => Promise<void>
+  readCopilotConfig: (repoPath: string) => Promise<AgentFileContent>
+  writeCopilotConfig: (repoPath: string, xaideContent: string) => Promise<void>
+  listHooks: (workspaceId?: string) => Promise<HookRecord[]>
+  createHook: (input: CreateHookInput) => Promise<HookRecord>
+  updateHook: (id: string, input: UpdateHookInput) => Promise<HookRecord>
+  deleteHook: (id: string) => Promise<void>
+  listMcpServers: (workspaceId?: string) => Promise<McpServerRecord[]>
+  createMcpServer: (input: CreateMcpServerInput) => Promise<McpServerRecord>
+  updateMcpServer: (id: string, input: UpdateMcpServerInput) => Promise<McpServerRecord>
+  deleteMcpServer: (id: string) => Promise<void>
+  writeMcpConfigClaude: (repoPath: string, workspaceId: string) => Promise<void>
+  writeMcpConfigCopilot: (repoPath: string, workspaceId: string) => Promise<void>
+}
+
 export interface XaideAPI {
   workspace: WorkspaceAPI
   pty: PtyAPI
@@ -222,6 +338,7 @@ export interface XaideAPI {
   agent: AgentAPI
   tasks: TaskAPI
   sandbox: SandboxAPI
+  settings: SettingsAPI
 }
 
 declare global {

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI, TaskAPI, SandboxAPI, SandboxCreateOptions } from './ipc-types'
-import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS, SANDBOX_CHANNELS } from './ipc-types'
+import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI, TaskAPI, SandboxAPI, SandboxCreateOptions, SettingsAPI, UpsertAgentConfigInput, CreateHookInput, UpdateHookInput, CreateMcpServerInput, UpdateMcpServerInput } from './ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS, SANDBOX_CHANNELS, SETTINGS_CHANNELS } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
@@ -62,6 +62,42 @@ const api: XaideAPI = {
     stop: (sandboxName: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.STOP, sandboxName),
     remove: (sandboxName: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.REMOVE, sandboxName),
   } satisfies SandboxAPI,
+  settings: {
+    getGlobalAgentConfig: () =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_GLOBAL),
+    getWorkspaceAgentConfig: (workspaceId: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_WORKSPACE, workspaceId),
+    upsertAgentConfig: (input: UpsertAgentConfigInput) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_UPSERT, input),
+    readClaudeConfig: (repoPath: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_READ_CLAUDE, repoPath),
+    writeClaudeConfig: (repoPath: string, xaideContent: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_WRITE_CLAUDE, repoPath, xaideContent),
+    readCopilotConfig: (repoPath: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_READ_COPILOT, repoPath),
+    writeCopilotConfig: (repoPath: string, xaideContent: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_WRITE_COPILOT, repoPath, xaideContent),
+    listHooks: (workspaceId?: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.HOOKS_LIST, workspaceId),
+    createHook: (input: CreateHookInput) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.HOOKS_CREATE, input),
+    updateHook: (id: string, input: UpdateHookInput) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.HOOKS_UPDATE, id, input),
+    deleteHook: (id: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.HOOKS_DELETE, id),
+    listMcpServers: (workspaceId?: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_LIST, workspaceId),
+    createMcpServer: (input: CreateMcpServerInput) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_CREATE, input),
+    updateMcpServer: (id: string, input: UpdateMcpServerInput) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_UPDATE, id, input),
+    deleteMcpServer: (id: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_DELETE, id),
+    writeMcpConfigClaude: (repoPath: string, workspaceId: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_WRITE_CLAUDE, repoPath, workspaceId),
+    writeMcpConfigCopilot: (repoPath: string, workspaceId: string) =>
+      ipcRenderer.invoke(SETTINGS_CHANNELS.MCP_WRITE_COPILOT, repoPath, workspaceId),
+  } satisfies SettingsAPI,
 }
 
 contextBridge.exposeInMainWorld('xaide', api)

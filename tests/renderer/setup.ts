@@ -75,6 +75,38 @@ const mockXaideApi: XaideAPI = {
     stop: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
   },
+  settings: {
+    getGlobalAgentConfig: vi.fn().mockResolvedValue(null),
+    getWorkspaceAgentConfig: vi.fn().mockResolvedValue(null),
+    upsertAgentConfig: vi.fn().mockResolvedValue({
+      id: 'cfg-1', scope: 'global', workspaceId: null, agentType: 'all',
+      systemPromptAdditions: '', configJson: '{}', createdAt: '', updatedAt: '',
+    }),
+    readClaudeConfig: vi.fn().mockResolvedValue({ external: '', xaideManaged: '' }),
+    writeClaudeConfig: vi.fn().mockResolvedValue(undefined),
+    readCopilotConfig: vi.fn().mockResolvedValue({ external: '', xaideManaged: '' }),
+    writeCopilotConfig: vi.fn().mockResolvedValue(undefined),
+    listHooks: vi.fn().mockResolvedValue([]),
+    createHook: vi.fn().mockResolvedValue({
+      id: 'hook-1', scope: 'global', workspaceId: null,
+      event: 'agent.start', command: 'echo start', enabled: true, createdAt: '',
+    }),
+    updateHook: vi.fn().mockResolvedValue({
+      id: 'hook-1', scope: 'global', workspaceId: null,
+      event: 'agent.start', command: 'echo start', enabled: true, createdAt: '',
+    }),
+    deleteHook: vi.fn().mockResolvedValue(undefined),
+    listMcpServers: vi.fn().mockResolvedValue([]),
+    createMcpServer: vi.fn().mockResolvedValue({
+      id: 'mcp-1', name: 'my-mcp', scope: 'global', workspaceId: null, configJson: '{}', enabled: true, createdAt: '',
+    }),
+    updateMcpServer: vi.fn().mockResolvedValue({
+      id: 'mcp-1', name: 'my-mcp', scope: 'global', workspaceId: null, configJson: '{}', enabled: true, createdAt: '',
+    }),
+    deleteMcpServer: vi.fn().mockResolvedValue(undefined),
+    writeMcpConfigClaude: vi.fn().mockResolvedValue(undefined),
+    writeMcpConfigCopilot: vi.fn().mockResolvedValue(undefined),
+  },
 }
 
 Object.defineProperty(window, 'xaide', {
