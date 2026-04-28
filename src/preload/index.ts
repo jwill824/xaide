@@ -63,10 +63,10 @@ const api: XaideAPI = {
     remove: (sandboxName: string) => ipcRenderer.invoke(SANDBOX_CHANNELS.REMOVE, sandboxName),
   } satisfies SandboxAPI,
   settings: {
-    getGlobalAgentConfig: () =>
-      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_GLOBAL),
-    getWorkspaceAgentConfig: (workspaceId: string) =>
-      ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_WORKSPACE, workspaceId),
+    getAgentConfigs: (workspaceId: string | null) =>
+      workspaceId !== null
+        ? ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_WORKSPACE, workspaceId)
+        : ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_GET_GLOBAL),
     upsertAgentConfig: (input: UpsertAgentConfigInput) =>
       ipcRenderer.invoke(SETTINGS_CHANNELS.AGENT_CONFIG_UPSERT, input),
     readClaudeConfig: (repoPath: string) =>

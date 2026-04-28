@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import type { FC } from 'react'
 import { useMcpServers } from '../hooks/useMcpServers'
+import { useActiveWorkspace } from '../hooks/useActiveWorkspace'
 
 export const McpServersSection: FC<{ workspaceId: string | null }> = ({ workspaceId }) => {
   const { servers, createServer, deleteServer, isPending } = useMcpServers(workspaceId)
+  const activeWorkspace = useActiveWorkspace()
+  const repoPath = activeWorkspace?.repoPath ?? ''
   const [name, setName] = useState('')
   const [scope, setScope] = useState<'global' | 'workspace'>('global')
   const [configJson, setConfigJson] = useState('')
@@ -37,6 +40,21 @@ export const McpServersSection: FC<{ workspaceId: string | null }> = ({ workspac
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold text-neutral-100">MCP Servers</h1>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => window.xaide.settings.writeMcpConfigClaude(repoPath, workspaceId ?? '')}
+          className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-xs text-white"
+        >
+          Write Claude Config
+        </button>
+        <button
+          onClick={() => window.xaide.settings.writeMcpConfigCopilot(repoPath, workspaceId ?? '')}
+          className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-xs text-white"
+        >
+          Write Copilot Config
+        </button>
+      </div>
 
       {servers.length === 0 ? (
         <p className="text-neutral-400">No MCP servers configured</p>

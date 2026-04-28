@@ -103,14 +103,14 @@ export const AgentConfigSection: FC<Props> = ({ workspaceId }) => {
           label="Claude (CLAUDE.md)"
           repoPath={repoPath}
           readFn={window.xaide.settings.readClaudeConfig}
-          writeFn={window.xaide.settings.writeClaudeConfig}
+          writeFn={(content) => window.xaide.settings.writeClaudeConfig(repoPath, content)}
           queryKey="claudeConfig"
         />
         <FileConfigSubsection
           label="GitHub Copilot (.github/copilot-instructions.md)"
           repoPath={repoPath}
           readFn={window.xaide.settings.readCopilotConfig}
-          writeFn={window.xaide.settings.writeCopilotConfig}
+          writeFn={(content) => window.xaide.settings.writeCopilotConfig(repoPath, content)}
           queryKey="copilotConfig"
         />
       </div>

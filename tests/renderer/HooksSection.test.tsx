@@ -35,7 +35,6 @@ describe('HooksSection', () => {
         workspaceId: null,
         scope: 'global',
         createdAt: '',
-        updatedAt: '',
       },
     ])
     renderWithQuery(<HooksSection workspaceId={null} />)
@@ -53,7 +52,6 @@ describe('HooksSection', () => {
       workspaceId: null,
       scope: 'global',
       createdAt: '',
-      updatedAt: '',
     })
 
     renderWithQuery(<HooksSection workspaceId={null} />)
