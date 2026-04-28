@@ -35,7 +35,7 @@ describe('SettingsView', () => {
     const user = userEvent.setup()
     render(<SettingsView />, { wrapper: Wrapper })
     await user.click(screen.getByRole('button', { name: 'MCP Servers' }))
-    expect(screen.getByText('MCP Servers Configuration')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'MCP Servers' })).toBeInTheDocument()
     expect(screen.queryByText('Agent Configuration')).not.toBeInTheDocument()
   })
 })
