@@ -57,6 +57,10 @@ describe('McpManager', () => {
     expect(await manager.list()).toHaveLength(0)
   })
 
+  it('throws when deleting nonexistent server', async () => {
+    await expect(manager.delete('no-such-id')).rejects.toThrow('MCP server not found: no-such-id')
+  })
+
   it('writeClaudeMcpConfig writes .mcp.json', async () => {
     await manager.create({ name: 'my-tool', scope: 'global', config: { command: 'npx', args: ['my-tool'] } })
     await manager.writeClaudeMcpConfig(tmpDir, workspaceId)

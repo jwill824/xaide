@@ -1,5 +1,6 @@
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 
 export const workspaces = sqliteTable('workspaces', {
   id: text('id').primaryKey(),
@@ -112,8 +113,6 @@ export const worktrees = sqliteTable(
   },
   (t) => [index('idx_worktrees_workspace_id').on(t.workspaceId)],
 )
-
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 
 export const agentConfigs = sqliteTable(
   'agent_configs',
