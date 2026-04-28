@@ -6,19 +6,16 @@ const HOOK_EVENTS = ['agent.start', 'agent.stop', 'agent.commit', 'agent.error']
 type HookEvent = (typeof HOOK_EVENTS)[number]
 
 export const HooksSection: FC<{ workspaceId: string | null }> = ({ workspaceId }) => {
-  const { hooks, createHook, updateHook, deleteHook } = useHooks(workspaceId)
+  const { hooks, createHook, updateHook, deleteHook, isPending } = useHooks(workspaceId)
   const [event, setEvent] = useState<HookEvent>('agent.start')
   const [command, setCommand] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    createHook({
-      event,
-      command,
-      workspaceId: workspaceId ?? null,
-    })
-    setEvent('agent.start')
-    setCommand('')
+    createHook(
+      { event, command, workspaceId: workspaceId ?? null },
+      { onSuccess: () => { setEvent('agent.start'); setCommand('') } }
+    )
   }
 
   return (
@@ -91,6 +88,7 @@ export const HooksSection: FC<{ workspaceId: string | null }> = ({ workspaceId }
         </div>
         <button
           type="submit"
+          disabled={isPending}
           className="bg-blue-600 hover:bg-blue-500 text-white rounded px-3 py-1 text-sm"
         >
           Add Hook
