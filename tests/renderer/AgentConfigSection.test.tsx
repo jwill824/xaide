@@ -49,7 +49,7 @@ describe('AgentConfigSection', () => {
     await userEvent.click(saveButtons[0])
 
     await waitFor(() => {
-      expect(window.xaide.settings.writeClaudeConfig).toHaveBeenCalled()
+      expect(window.xaide.settings.writeClaudeConfig).toHaveBeenCalledWith('new content')
     })
   })
 })

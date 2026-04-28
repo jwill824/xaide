@@ -76,8 +76,7 @@ const mockXaideApi: XaideAPI = {
     remove: vi.fn().mockResolvedValue(undefined),
   },
   settings: {
-    getGlobalAgentConfig: vi.fn().mockResolvedValue(null),
-    getWorkspaceAgentConfig: vi.fn().mockResolvedValue(null),
+    getAgentConfigs: vi.fn().mockResolvedValue([]),
     upsertAgentConfig: vi.fn().mockResolvedValue({
       id: 'cfg-1', scope: 'global', workspaceId: null, agentType: 'all',
       systemPromptAdditions: '', configJson: '{}', createdAt: '', updatedAt: '',

@@ -11,7 +11,7 @@ interface FileConfigSubsectionProps {
   label: string
   repoPath: string
   readFn: (repoPath: string) => Promise<{ external: string; xaideManaged: string }>
-  writeFn: (repoPath: string, content: string) => Promise<void>
+  writeFn: (content: string) => Promise<void>
   queryKey: string
 }
 
@@ -37,7 +37,7 @@ const FileConfigSubsection: FC<FileConfigSubsectionProps> = ({
   }, [data?.xaideManaged])
 
   const { mutate: save, isPending } = useMutation({
-    mutationFn: () => writeFn(repoPath, content),
+    mutationFn: () => writeFn(content),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [queryKey] })
     },
