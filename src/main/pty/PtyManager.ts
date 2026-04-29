@@ -11,6 +11,8 @@ export interface PtyCreateOptions {
   command?: string
   /** Args to pass when `command` is provided. Defaults to []. */
   args?: string[]
+  /** Pre-assigned session ID; a UUID is generated if omitted. */
+  id?: string
 }
 
 interface PtySession {
@@ -29,7 +31,7 @@ export class PtyManager {
         ? 'powershell.exe'
         : (process.env['SHELL'] ?? '/bin/zsh'))
     const args = options.command ? (options.args ?? []) : []
-    const id = randomUUID()
+    const id = options.id ?? randomUUID()
     const ptyProcess = pty.spawn(shell, args, {
       name: 'xterm-color',
       cols: options.cols,

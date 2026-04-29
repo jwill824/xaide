@@ -45,6 +45,8 @@ const api: XaideAPI = {
     listDetected: () => ipcRenderer.invoke(AGENT_CHANNELS.LIST_DETECTED),
     createSession: (input: CreateAgentSessionInput) =>
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_CREATE, input),
+    spawnSession: (ptySessionId: string, cols: number, rows: number) =>
+      ipcRenderer.invoke(AGENT_CHANNELS.SESSION_SPAWN, ptySessionId, cols, rows),
     listSessions: (worktreeId: string) =>
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_LIST, worktreeId),
     killSession: (sessionId: string, ptySessionId: string, sandboxName?: string) =>

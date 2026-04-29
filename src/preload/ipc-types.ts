@@ -102,6 +102,7 @@ export interface WorktreeAPI {
 export const AGENT_CHANNELS = {
   LIST_DETECTED: 'agent:list-detected',
   SESSION_CREATE: 'agent:session:create',
+  SESSION_SPAWN: 'agent:session:spawn',
   SESSION_LIST: 'agent:session:list',
   SESSION_KILL: 'agent:session:kill',
 } as const
@@ -168,6 +169,7 @@ export interface CreateAgentSessionInput {
 export interface AgentAPI {
   listDetected: () => Promise<DetectedAgent[]>
   createSession: (input: CreateAgentSessionInput) => Promise<AgentSessionRecord>
+  spawnSession: (ptySessionId: string, cols: number, rows: number) => Promise<void>
   listSessions: () => Promise<AgentSessionRecord[]>
   killSession: (sessionId: string, ptySessionId: string, sandboxName?: string) => Promise<void>
 }

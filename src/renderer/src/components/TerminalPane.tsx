@@ -7,7 +7,8 @@ interface Props {
   sessionId: string
   /** When true, this pane is visible — triggers a fit to avoid blank rendering after CSS show. */
   active?: boolean
-  onReady?: () => void
+  /** Called after the terminal has been fitted and reports its actual dimensions. */
+  onReady?: (cols: number, rows: number) => void
 }
 
 export function TerminalPane({ sessionId, active, onReady }: Props) {
@@ -39,12 +40,14 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
     term.loadAddon(fit)
     term.open(container)
 
-    // Defer precise fit until after browser layout fully settles.
+    // Defer precise fit until after browser layout fully settles, then notify
+    // the caller so it can spawn the agent process at the correct size.
     let raf1: number, raf2: number
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         fit.fit()
         window.xaide.pty.resize(sessionId, term.cols, term.rows)
+        onReady?.(term.cols, term.rows)
       })
     })
 
@@ -67,8 +70,6 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
       window.xaide.pty.resize(sessionId, term.cols, term.rows)
     })
     ro.observe(container)
-
-    onReady?.()
 
     return () => {
       cancelAnimationFrame(raf1)

@@ -14,8 +14,18 @@ const AGENT_COMMANDS: Record<string, { command: string; args: string[] }> = {
   copilot: { command: 'copilot', args: [] },
 }
 
+interface PendingSpawnConfig {
+  ptyCommand: string
+  ptyArgs: string[]
+  worktreePath: string
+  workspaceId: string
+  sandboxName?: string
+}
+
 export class AgentSessionManager {
   private webContents?: WebContents
+  /** Sessions whose PTY has not been spawned yet — waiting for terminal-ready signal. */
+  private pendingSpawns = new Map<string, PendingSpawnConfig>()
 
   constructor(
     private db: DrizzleDb,
@@ -27,15 +37,22 @@ export class AgentSessionManager {
   setWebContents(wc: WebContents): void {
     this.webContents = wc
   }
+
+  /**
+   * Create the DB record and return a pre-allocated ptySessionId.
+   * The PTY process is NOT started here — call spawn() once the terminal is sized.
+   */
   async create(input: CreateAgentSessionInput): Promise<AgentSessionRecord> {
     const id = randomUUID()
+    // Pre-allocate the ptySessionId so the renderer can subscribe to data events
+    // before the process starts.
+    const ptySessionId = randomUUID()
 
     let sandboxName: string | undefined
     if (input.sandboxName && this.sandbox) {
       this.sandbox.create({
         name: input.sandboxName,
         worktreePath: input.worktreePath,
-        // branch intentionally omitted — sbx uses worktreePath as the workspace root
       })
       sandboxName = input.sandboxName
     }
@@ -52,26 +69,6 @@ export class AgentSessionManager {
       ptyArgs = agentCmd.args
     }
 
-    const ptyResult = this.pty.create({
-      workspaceId: input.repoPath ?? input.worktreeId ?? '',
-      cols: input.cols ?? 80,
-      rows: input.rows ?? 24,
-      cwd: input.worktreePath,
-      command: ptyCommand,
-      args: ptyArgs,
-    })
-
-    // Forward PTY output to the renderer window.
-    if (this.webContents) {
-      const wc = this.webContents
-      ptyResult.process.onData((data: string) => {
-        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.DATA, ptyResult.id, data)
-      })
-      ptyResult.process.onExit(() => {
-        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.EXIT, ptyResult.id)
-      })
-    }
-
     let record: AgentSessionRecord
     try {
       const [inserted] = await this.db
@@ -82,29 +79,71 @@ export class AgentSessionManager {
           agentId: input.agentId,
           branch: input.branch,
           worktreePath: input.worktreePath,
-          ptySessionId: ptyResult.id,
-          containerId: sandboxName ?? null,   // DB column repurposed: stores sbx sandbox name
-          status: 'running',
+          ptySessionId,
+          containerId: sandboxName ?? null,
+          status: 'pending',
         })
         .returning()
       record = inserted as AgentSessionRecord
     } catch (err) {
-      try { this.pty.kill(ptyResult.id) } catch { /* already dead */ }
       if (sandboxName && this.sandbox) {
         this.sandbox.remove(sandboxName)
       }
       throw err
     }
 
-    this.hookRunner
-      .run('agent.started', {
-        repoPath: input.repoPath ?? input.worktreePath,
-        branch: input.branch,
-        worktreePath: input.worktreePath,
-      })
-      .catch(() => {})
+    this.pendingSpawns.set(ptySessionId, {
+      ptyCommand,
+      ptyArgs,
+      worktreePath: input.worktreePath,
+      workspaceId: input.repoPath ?? input.worktreeId ?? '',
+      sandboxName,
+    })
 
     return record as AgentSessionRecord
+  }
+
+  /**
+   * Spawn the agent process for a session created with create().
+   * Called by the renderer once the terminal has been fitted and reports its actual size.
+   */
+  async spawn(ptySessionId: string, cols: number, rows: number): Promise<void> {
+    const config = this.pendingSpawns.get(ptySessionId)
+    if (!config) throw new Error(`No pending spawn for PTY session: ${ptySessionId}`)
+    this.pendingSpawns.delete(ptySessionId)
+
+    const ptyResult = this.pty.create({
+      id: ptySessionId,
+      workspaceId: config.workspaceId,
+      cols,
+      rows,
+      cwd: config.worktreePath,
+      command: config.ptyCommand,
+      args: config.ptyArgs,
+    })
+
+    if (this.webContents) {
+      const wc = this.webContents
+      ptyResult.process.onData((data: string) => {
+        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.DATA, ptySessionId, data)
+      })
+      ptyResult.process.onExit(() => {
+        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.EXIT, ptySessionId)
+      })
+    }
+
+    await this.db
+      .update(agentSessions)
+      .set({ status: 'running', updatedAt: new Date().toISOString() })
+      .where(eq(agentSessions.ptySessionId, ptySessionId))
+
+    this.hookRunner
+      .run('agent.started', {
+        repoPath: config.workspaceId,
+        branch: '',
+        worktreePath: config.worktreePath,
+      })
+      .catch(() => {})
   }
 
   async list(): Promise<AgentSessionRecord[]> {
@@ -113,10 +152,12 @@ export class AgentSessionManager {
   }
 
   async kill(sessionId: string, ptySessionId: string, sandboxName?: string): Promise<void> {
+    // Cancel a pending spawn if it hasn't started yet.
+    this.pendingSpawns.delete(ptySessionId)
     try {
       this.pty.kill(ptySessionId)
     } catch {
-      // PTY may already be dead
+      // PTY may already be dead or never started
     }
     if (sandboxName && this.sandbox) {
       this.sandbox.stop(sandboxName)

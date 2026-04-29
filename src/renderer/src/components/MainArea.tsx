@@ -69,8 +69,9 @@ export const MainArea: FC = () => {
     [removeSession],
   )
 
-  const termAreaRef = useRef<HTMLDivElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** ptySessionIds that need agent:session:spawn once terminal reports ready. */
+  const pendingSpawns = useRef<Set<string>>(new Set())
 
   const handleLayoutChange = useCallback(
     (node: PaneNode) => {
@@ -88,12 +89,6 @@ export const MainArea: FC = () => {
     const wt = worktrees.find((w) => w.id === worktreeId)
     if (!wt || !activeWorkspaceId) return
 
-    // Measure the terminal area now so the PTY spawns at the correct size.
-    // JetBrains Mono 13px: ~8px wide, ~17px tall per cell.
-    const el = termAreaRef.current
-    const cols = el ? Math.max(Math.floor(el.clientWidth / 8), 80) : 80
-    const rows = el ? Math.max(Math.floor(el.clientHeight / 17), 24) : 24
-
     try {
       const record = await launchAgent.mutateAsync({
         agentId,
@@ -101,23 +96,24 @@ export const MainArea: FC = () => {
         worktreePath: wt.worktreePath,
         branch: wt.branch,
         sandboxName,
-        cols,
-        rows,
       })
       setShowLauncher(false)
+      const ptySessionId = record.ptySessionId ?? record.id
       const uiRecord: AgentSessionUiRecord = {
         id: record.id,
-        ptySessionId: record.ptySessionId ?? record.id,
+        ptySessionId,
         agentId: record.agentId,
         agentName: agentNames[agentId] ?? agentId,
         branch: record.branch,
         worktreeId,
         workspaceId: activeWorkspaceId,
-        sandboxName: record.containerId ?? undefined,  // DB column stores sbx name
+        sandboxName: record.containerId ?? undefined,
       }
+      // Mark this session as needing a spawn call once the terminal reports ready.
+      pendingSpawns.current.add(ptySessionId)
       addAgentSession(uiRecord)
       addSession({
-        id: record.ptySessionId ?? record.id,
+        id: ptySessionId,
         workspaceId: activeWorkspaceId,
         title: `${agentNames[agentId] ?? agentId} (${wt.branch})`,
         cwd: wt.worktreePath,
@@ -186,7 +182,7 @@ export const MainArea: FC = () => {
         onCloseSession={handleCloseSession}
         onOpenAgentLauncher={() => setShowLauncher(true)}
       />
-      <div ref={termAreaRef} className="flex-1 overflow-hidden min-h-0 relative">
+      <div className="flex-1 overflow-hidden min-h-0 relative">
         {layout && layout.type !== 'terminal' ? (
           // Split or browser layout: use the pane tree as-is.
           <PaneSplit node={layout} onLayoutChange={handleLayoutChange} />
@@ -202,6 +198,16 @@ export const MainArea: FC = () => {
               <TerminalPane
                 sessionId={session.id}
                 active={session.id === activeSessionId}
+                onReady={
+                  pendingSpawns.current.has(session.id)
+                    ? (cols, rows) => {
+                        pendingSpawns.current.delete(session.id)
+                        window.xaide.agent.spawnSession(session.id, cols, rows).catch(
+                          (err) => console.error('[TerminalPane] spawn failed:', err),
+                        )
+                      }
+                    : undefined
+                }
               />
             </div>
           ))

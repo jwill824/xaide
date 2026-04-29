@@ -13,6 +13,10 @@ export function registerAgentHandlers(
     sessionManager.create(input),
   )
 
+  ipcMain.handle('agent:session:spawn', (_event, ptySessionId: string, cols: number, rows: number) =>
+    sessionManager.spawn(ptySessionId, cols, rows),
+  )
+
   ipcMain.handle('agent:session:list', () => sessionManager.list())
 
   ipcMain.handle('agent:session:kill', (_event, sessionId: string, ptySessionId: string, sandboxName?: string) =>
