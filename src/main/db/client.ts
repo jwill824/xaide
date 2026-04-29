@@ -155,10 +155,9 @@ export function createDb(path: string): RawDb {
   }
 
   // If task_id was created NOT NULL in an older schema, reconstruct the table to make it nullable.
-  const taskIdInfo = db
-    .prepare("SELECT notnull FROM pragma_table_info('agent_sessions') WHERE name = 'task_id'")
-    .get() as { notnull: number } | undefined
-  if (taskIdInfo?.notnull === 1) {
+  const cols = db.prepare("PRAGMA table_info('agent_sessions')").all() as Array<{ name: string; notnull: number }>
+  const taskIdCol = cols.find((c) => c.name === 'task_id')
+  if (taskIdCol?.notnull === 1) {
     db.exec(`
       PRAGMA foreign_keys = OFF;
       CREATE TABLE agent_sessions_new (
