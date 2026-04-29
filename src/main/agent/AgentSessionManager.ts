@@ -1,11 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
+import type { WebContents } from 'electron'
 import type { DrizzleDb } from '../db/schema'
 import { agentSessions } from '../db/schema'
 import type { PtyManager } from '../pty/PtyManager'
 import type { HookRunner } from '../worktree/HookRunner'
 import type { SandboxManager } from '../sandbox/SandboxManager'
 import type { AgentSessionRecord, CreateAgentSessionInput } from './types'
+import { PTY_CHANNELS } from '../../preload/ipc-types'
 
 const AGENT_COMMANDS: Record<string, { command: string; args: string[] }> = {
   claude: { command: 'claude', args: [] },
@@ -13,6 +15,8 @@ const AGENT_COMMANDS: Record<string, { command: string; args: string[] }> = {
 }
 
 export class AgentSessionManager {
+  private webContents?: WebContents
+
   constructor(
     private db: DrizzleDb,
     private pty: PtyManager,
@@ -20,6 +24,9 @@ export class AgentSessionManager {
     private sandbox?: SandboxManager,
   ) {}
 
+  setWebContents(wc: WebContents): void {
+    this.webContents = wc
+  }
   async create(input: CreateAgentSessionInput): Promise<AgentSessionRecord> {
     const id = randomUUID()
 
@@ -53,6 +60,17 @@ export class AgentSessionManager {
       command: ptyCommand,
       args: ptyArgs,
     })
+
+    // Forward PTY output to the renderer window.
+    if (this.webContents) {
+      const wc = this.webContents
+      ptyResult.process.onData((data: string) => {
+        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.DATA, ptyResult.id, data)
+      })
+      ptyResult.process.onExit(() => {
+        if (!wc.isDestroyed()) wc.send(PTY_CHANNELS.EXIT, ptyResult.id)
+      })
+    }
 
     let record: AgentSessionRecord
     try {

@@ -34,6 +34,6 @@ export function registerPtyHandlers(manager: PtyManager, webContents: WebContent
   )
 
   ipcMain.handle(PTY_CHANNELS.KILL, (_, sessionId: string): void => {
-    manager.kill(sessionId)
+    if (manager.has(sessionId)) manager.kill(sessionId)
   })
 }

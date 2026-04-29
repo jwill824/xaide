@@ -72,6 +72,7 @@ app.whenReady().then(() => {
   registerSettingsHandlers(agentConfigManager, hookManager, mcpManager)
   const win = createWindow()
   registerPtyHandlers(ptyManager, win.webContents)
+  agentSessionManager.setWebContents(win.webContents)
 
   win.on('close', () => ptyManager?.killAll())
 
