@@ -15,6 +15,9 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
+  // Keep a ref so the mount effect never re-runs just because the callback changed.
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
 
   useEffect(() => {
     const container = containerRef.current
@@ -47,7 +50,7 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
       raf2 = requestAnimationFrame(() => {
         fit.fit()
         window.xaide.pty.resize(sessionId, term.cols, term.rows)
-        onReady?.(term.cols, term.rows)
+        onReadyRef.current?.(term.cols, term.rows)
       })
     })
 
@@ -81,7 +84,7 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
       ro.disconnect()
       term.dispose()
     }
-  }, [sessionId, onReady])
+  }, [sessionId])
 
   // Re-fit when this pane becomes visible. Use double-rAF so the browser has fully
   // completed layout after the CSS display change before we measure the container.
