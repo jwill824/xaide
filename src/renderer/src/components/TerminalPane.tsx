@@ -19,18 +19,34 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
     const container = containerRef.current
     if (!container) return
 
+    // Estimate initial size from container dimensions to minimize content reflow when
+    // the deferred fit runs. JetBrains Mono 13px ≈ 8px wide, 17px tall per cell.
+    const estCols = Math.max(Math.floor(container.clientWidth / 8), 80)
+    const estRows = Math.max(Math.floor(container.clientHeight / 17), 24)
+
     const term = new Terminal({
+      cols: estCols,
+      rows: estRows,
       theme: { background: '#0a0a0a', foreground: '#d4d4d4', cursor: '#d4d4d4' },
       fontFamily: 'JetBrains Mono, Menlo, monospace',
       fontSize: 13,
       cursorBlink: true,
+      scrollback: 5000,
     })
     const fit = new FitAddon()
     termRef.current = term
     fitRef.current = fit
     term.loadAddon(fit)
     term.open(container)
-    fit.fit()
+
+    // Defer precise fit until after browser layout fully settles.
+    let raf1: number, raf2: number
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        fit.fit()
+        window.xaide.pty.resize(sessionId, term.cols, term.rows)
+      })
+    })
 
     const unsub = window.xaide.pty.onData((id, data) => {
       if (id === sessionId) term.write(data)
@@ -55,6 +71,8 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
     onReady?.()
 
     return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
       termRef.current = null
       fitRef.current = null
       unsub()

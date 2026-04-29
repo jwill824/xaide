@@ -20,6 +20,9 @@ vi.mock('@xterm/addon-fit', () => ({ FitAddon: vi.fn(() => mockFit) }))
 
 const mockResizeObserver = vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() }))
 vi.stubGlobal('ResizeObserver', mockResizeObserver)
+// Run rAF callbacks synchronously so deferred fits are testable.
+vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { cb(0); return 0 })
+vi.stubGlobal('cancelAnimationFrame', () => {})
 
 describe('TerminalPane', () => {
   beforeEach(() => vi.clearAllMocks())
