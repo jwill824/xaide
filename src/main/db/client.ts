@@ -148,5 +148,10 @@ export function createDb(path: string): RawDb {
   } catch {
     // column already exists — safe to ignore
   }
+  try {
+    db.exec('ALTER TABLE agent_sessions ADD COLUMN pty_session_id TEXT')
+  } catch {
+    // column already exists — safe to ignore
+  }
   return db
 }
