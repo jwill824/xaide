@@ -170,7 +170,14 @@ export const MainArea: FC = () => {
         workspaceId={activeWorkspaceId}
         sessions={sessions}
         activeSessionId={activeSessionId}
-        onSelectSession={(id) => setActiveSession(activeWorkspaceId, id)}
+        onSelectSession={(id) => {
+            setActiveSession(activeWorkspaceId, id)
+            // For a single-pane layout, update the displayed terminal to match the clicked tab.
+            // Split layouts manage their own session assignments independently.
+            if (layout?.type === 'terminal') {
+              handleLayoutChange({ type: 'terminal', sessionId: id })
+            }
+          }}
         onNewSession={openNewSession}
         onCloseSession={handleCloseSession}
         onOpenAgentLauncher={() => setShowLauncher(true)}
