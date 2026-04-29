@@ -12,6 +12,7 @@ interface Props {
 
 export function TerminalPane({ sessionId, active, onReady }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
       cursorBlink: true,
     })
     const fit = new FitAddon()
+    termRef.current = term
     fitRef.current = fit
     term.loadAddon(fit)
     term.open(container)
@@ -53,6 +55,7 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
     onReady?.()
 
     return () => {
+      termRef.current = null
       fitRef.current = null
       unsub()
       unsubExit()
@@ -61,12 +64,23 @@ export function TerminalPane({ sessionId, active, onReady }: Props) {
     }
   }, [sessionId, onReady])
 
-  // Re-fit when this pane becomes visible — CSS display changes don't trigger ResizeObserver.
+  // Re-fit when this pane becomes visible. Use double-rAF so the browser has fully
+  // completed layout after the CSS display change before we measure the container.
   useEffect(() => {
     if (!active) return
-    const t = setTimeout(() => fitRef.current?.fit(), 20)
-    return () => clearTimeout(t)
-  }, [active])
+    let raf1: number, raf2: number
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        fitRef.current?.fit()
+        const term = termRef.current
+        if (term) window.xaide.pty.resize(sessionId, term.cols, term.rows)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [active, sessionId])
 
   return <div ref={containerRef} className="h-full w-full overflow-hidden" />
 }
