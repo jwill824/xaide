@@ -69,6 +69,7 @@ export const MainArea: FC = () => {
     [removeSession],
   )
 
+  const termAreaRef = useRef<HTMLDivElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleLayoutChange = useCallback(
@@ -86,6 +87,13 @@ export const MainArea: FC = () => {
   const handleLaunchAgent = async (agentId: string, worktreeId: string, sandboxName?: string) => {
     const wt = worktrees.find((w) => w.id === worktreeId)
     if (!wt || !activeWorkspaceId) return
+
+    // Measure the terminal area now so the PTY spawns at the correct size.
+    // JetBrains Mono 13px: ~8px wide, ~17px tall per cell.
+    const el = termAreaRef.current
+    const cols = el ? Math.max(Math.floor(el.clientWidth / 8), 80) : 80
+    const rows = el ? Math.max(Math.floor(el.clientHeight / 17), 24) : 24
+
     try {
       const record = await launchAgent.mutateAsync({
         agentId,
@@ -93,6 +101,8 @@ export const MainArea: FC = () => {
         worktreePath: wt.worktreePath,
         branch: wt.branch,
         sandboxName,
+        cols,
+        rows,
       })
       setShowLauncher(false)
       const uiRecord: AgentSessionUiRecord = {
@@ -176,7 +186,7 @@ export const MainArea: FC = () => {
         onCloseSession={handleCloseSession}
         onOpenAgentLauncher={() => setShowLauncher(true)}
       />
-      <div className="flex-1 overflow-hidden min-h-0 relative">
+      <div ref={termAreaRef} className="flex-1 overflow-hidden min-h-0 relative">
         {layout && layout.type !== 'terminal' ? (
           // Split or browser layout: use the pane tree as-is.
           <PaneSplit node={layout} onLayoutChange={handleLayoutChange} />
