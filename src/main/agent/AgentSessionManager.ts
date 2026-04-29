@@ -11,7 +11,7 @@ import { PTY_CHANNELS } from '../../preload/ipc-types'
 
 const AGENT_COMMANDS: Record<string, { command: string; args: string[] }> = {
   claude: { command: 'claude', args: [] },
-  copilot: { command: 'gh', args: ['copilot'] },
+  copilot: { command: 'copilot', args: [] },
 }
 
 export class AgentSessionManager {
