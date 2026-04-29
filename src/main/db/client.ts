@@ -153,5 +153,34 @@ export function createDb(path: string): RawDb {
   } catch {
     // column already exists — safe to ignore
   }
+
+  // If task_id was created NOT NULL in an older schema, reconstruct the table to make it nullable.
+  const taskIdInfo = db
+    .prepare("SELECT notnull FROM pragma_table_info('agent_sessions') WHERE name = 'task_id'")
+    .get() as { notnull: number } | undefined
+  if (taskIdInfo?.notnull === 1) {
+    db.exec(`
+      PRAGMA foreign_keys = OFF;
+      CREATE TABLE agent_sessions_new (
+        id TEXT PRIMARY KEY,
+        task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
+        agent_id TEXT NOT NULL,
+        branch TEXT NOT NULL,
+        worktree_path TEXT NOT NULL,
+        pty_session_id TEXT,
+        container_id TEXT,
+        status TEXT NOT NULL DEFAULT 'pending'
+          CHECK(status IN ('pending','running','idle','finished','failed')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO agent_sessions_new SELECT id, task_id, agent_id, branch, worktree_path, pty_session_id, container_id, status, created_at, updated_at FROM agent_sessions;
+      DROP TABLE agent_sessions;
+      ALTER TABLE agent_sessions_new RENAME TO agent_sessions;
+      CREATE INDEX IF NOT EXISTS idx_agent_sessions_task_id ON agent_sessions(task_id);
+      PRAGMA foreign_keys = ON;
+    `)
+  }
+
   return db
 }
