@@ -5,11 +5,14 @@ import '@xterm/xterm/css/xterm.css'
 
 interface Props {
   sessionId: string
+  /** When true, this pane is visible — triggers a fit to avoid blank rendering after CSS show. */
+  active?: boolean
   onReady?: () => void
 }
 
-export function TerminalPane({ sessionId, onReady }: Props) {
+export function TerminalPane({ sessionId, active, onReady }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const fitRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -22,6 +25,7 @@ export function TerminalPane({ sessionId, onReady }: Props) {
       cursorBlink: true,
     })
     const fit = new FitAddon()
+    fitRef.current = fit
     term.loadAddon(fit)
     term.open(container)
     fit.fit()
@@ -49,12 +53,20 @@ export function TerminalPane({ sessionId, onReady }: Props) {
     onReady?.()
 
     return () => {
+      fitRef.current = null
       unsub()
       unsubExit()
       ro.disconnect()
       term.dispose()
     }
   }, [sessionId, onReady])
+
+  // Re-fit when this pane becomes visible — CSS display changes don't trigger ResizeObserver.
+  useEffect(() => {
+    if (!active) return
+    const t = setTimeout(() => fitRef.current?.fit(), 20)
+    return () => clearTimeout(t)
+  }, [active])
 
   return <div ref={containerRef} className="h-full w-full overflow-hidden" />
 }

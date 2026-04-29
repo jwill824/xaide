@@ -4,6 +4,7 @@ import { useUiStore } from '../store/uiStore'
 import { useActiveWorkspace } from '../hooks/useActiveWorkspace'
 import { SessionTabBar } from './SessionTabBar'
 import { PaneSplit } from './PaneSplit'
+import { TerminalPane } from './TerminalPane'
 import { AgentLauncher } from './AgentLauncher'
 import { useLaunchAgent } from '../hooks/useAgents'
 import { useWorktrees } from '../hooks/useWorktrees'
@@ -170,21 +171,30 @@ export const MainArea: FC = () => {
         workspaceId={activeWorkspaceId}
         sessions={sessions}
         activeSessionId={activeSessionId}
-        onSelectSession={(id) => {
-            setActiveSession(activeWorkspaceId, id)
-            // For a single-pane layout, update the displayed terminal to match the clicked tab.
-            // Split layouts manage their own session assignments independently.
-            if (layout?.type === 'terminal') {
-              handleLayoutChange({ type: 'terminal', sessionId: id })
-            }
-          }}
+        onSelectSession={(id) => setActiveSession(activeWorkspaceId, id)}
         onNewSession={openNewSession}
         onCloseSession={handleCloseSession}
         onOpenAgentLauncher={() => setShowLauncher(true)}
       />
-      <div className="flex-1 overflow-hidden min-h-0">
-        {layout ? (
+      <div className="flex-1 overflow-hidden min-h-0 relative">
+        {layout && layout.type !== 'terminal' ? (
+          // Split or browser layout: use the pane tree as-is.
           <PaneSplit node={layout} onLayoutChange={handleLayoutChange} />
+        ) : sessions.length > 0 ? (
+          // Single-session mode: keep all terminals mounted; show only the active one.
+          // This avoids xterm.js destroy/recreate on every tab switch.
+          sessions.map((session) => (
+            <div
+              key={session.id}
+              className="absolute inset-0"
+              style={{ display: session.id === activeSessionId ? 'flex' : 'none' }}
+            >
+              <TerminalPane
+                sessionId={session.id}
+                active={session.id === activeSessionId}
+              />
+            </div>
+          ))
         ) : (
           <div className="flex h-full items-center justify-center">
             <p className="text-neutral-600 text-sm select-none">No sessions open</p>
