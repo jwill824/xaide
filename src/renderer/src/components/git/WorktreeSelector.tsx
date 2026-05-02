@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { useWorktrees } from '../hooks/useWorktrees'
-import { useGitStore } from '../store/gitStore'
+import { useWorktrees } from '../../hooks/useWorktrees'
+import { useGitStore } from '../../store/gitStore'
 
 interface Props {
   workspaceId: string | null
