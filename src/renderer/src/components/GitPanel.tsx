@@ -9,7 +9,7 @@ import { CommitForm } from './git/CommitForm'
 import { CommitLog } from './git/CommitLog'
 
 export const GitPanel: FC = () => {
-  const { data: workspace } = useActiveWorkspace()
+  const workspace = useActiveWorkspace()
   const { activeWorktreeId, selectedFile, diffStaged } = useGitStore()
 
   const status = useGitStatus(activeWorktreeId)
