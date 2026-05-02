@@ -17,6 +17,8 @@ import { SandboxManager } from './sandbox/SandboxManager'
 import { AgentConfigManager } from './settings/AgentConfigManager'
 import { HookManager } from './settings/HookManager'
 import { McpManager } from './settings/McpManager'
+import { GitManager } from './git/GitManager'
+import { registerGitHandlers } from './ipc'
 
 let sqlite: RawDb | null = null
 let ptyManager: PtyManager | null = null
@@ -58,6 +60,15 @@ app.whenReady().then(() => {
   ptyManager = new PtyManager()
   const agentRegistry = new AgentRegistry()
   const agentSessionManager = new AgentSessionManager(db, ptyManager, hookRunner)
+
+  // Register Git IPC handlers
+  const getGitManagerForWorktree = (worktreeId: string) => {
+    const wt = db.query.worktrees.findFirst({ where: (w) => w.id === worktreeId })
+    if (!wt) throw new Error(`Worktree not found: ${worktreeId}`)
+    return new GitManager(wt.worktreePath)
+  }
+  registerGitHandlers(getGitManagerForWorktree)
+
 
   const taskManager = new TaskManager(db)
   const sandboxManager = new SandboxManager()
