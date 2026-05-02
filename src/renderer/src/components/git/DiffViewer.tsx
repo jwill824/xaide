@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import type { DiffResult } from '../../../../src/main/git/types'
+import type { DiffResult } from '../../../src/main/git/types'
 
 interface Props {
   diff: DiffResult | null

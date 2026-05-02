@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { useGitStore } from '../../store/gitStore'
-import { useGitCommit } from '../../hooks/useGit'
+import { useGitStore } from '../store/gitStore'
+import { useGitCommit } from '../hooks/useGit'
 
 interface Props {
   worktreeId: string

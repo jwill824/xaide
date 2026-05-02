@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import type { LogResult } from '../../../../src/main/git/types'
+import type { LogResult } from '../../../src/main/git/types'
 
 interface Props {
   log: LogResult | null

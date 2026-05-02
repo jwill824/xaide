@@ -1,7 +1,7 @@
 import type { FC } from 'react'
-import { useGitStore } from '../../store/gitStore'
-import { useGitStage, useGitUnstage, useGitDiscard } from '../../hooks/useGit'
-import type { StatusResult } from '../../../../src/main/git/types'
+import { useGitStore } from '../store/gitStore'
+import { useGitStage, useGitUnstage, useGitDiscard } from '../hooks/useGit'
+import type { StatusResult } from '../../../src/main/git/types'
 
 interface Props {
   worktreeId: string
