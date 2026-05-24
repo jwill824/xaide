@@ -3,7 +3,8 @@ import { join } from 'path'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { createDb } from './db/client'
 import type { RawDb } from './db/client'
-import { dbSchema } from './db/schema'
+import { dbSchema, worktrees } from './db/schema'
+import { eq } from 'drizzle-orm'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
 import { WorktreeManager } from './worktree/WorktreeManager'
@@ -63,7 +64,7 @@ app.whenReady().then(() => {
 
   // Register Git IPC handlers
   const getGitManagerForWorktree = (worktreeId: string) => {
-    const wt = db.query.worktrees.findFirst({ where: (w) => w.id === worktreeId })
+    const wt = db.select().from(worktrees).where(eq(worktrees.id, worktreeId)).get() ?? null
     if (!wt) throw new Error(`Worktree not found: ${worktreeId}`)
     return new GitManager(wt.worktreePath)
   }
