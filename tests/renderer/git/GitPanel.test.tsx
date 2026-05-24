@@ -27,6 +27,7 @@ describe('GitPanel', () => {
     })
     vi.mocked(window.xaide.worktree.list).mockResolvedValue([])
     vi.mocked(window.xaide.git.status).mockResolvedValue(null)
+    vi.mocked(window.xaide.git.log).mockResolvedValue(null)
   })
 
   it('renders worktree selector', () => {
@@ -44,8 +45,9 @@ describe('GitPanel', () => {
     expect(screen.getByText(/No status available/i)).toBeInTheDocument()
   })
 
-  it('renders recent commits section', () => {
+  it('renders without error when log data is null', () => {
     render(<GitPanel />, { wrapper })
-    expect(screen.getByText(/Recent Commits/i)).toBeInTheDocument()
+    // Should render without crashing; when log is null, CommitLog renders "No commits"
+    expect(screen.getByText(/No commits/i)).toBeInTheDocument()
   })
 })

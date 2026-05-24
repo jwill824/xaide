@@ -106,6 +106,15 @@ const mockXaideApi: XaideAPI = {
     writeMcpConfigClaude: vi.fn().mockResolvedValue(undefined),
     writeMcpConfigCopilot: vi.fn().mockResolvedValue(undefined),
   },
+  git: {
+    status: vi.fn().mockResolvedValue(null),
+    diff: vi.fn().mockResolvedValue(null),
+    log: vi.fn().mockResolvedValue(null),
+    stage: vi.fn().mockResolvedValue(undefined),
+    unstage: vi.fn().mockResolvedValue(undefined),
+    discard: vi.fn().mockResolvedValue(undefined),
+    commit: vi.fn().mockResolvedValue(''),
+  },
 }
 
 Object.defineProperty(window, 'xaide', {

@@ -36,7 +36,8 @@ describe('GitManager', () => {
     await mgr.stage(['b.txt'])
     writeFileSync(join(repoDir, 'a.txt'), 'hello world\n')
     const s = await mgr.status()
-    expect(s.branch).toBe('master')
+    // git init defaults to 'main' on most systems now, but can be 'master' on older configs
+    expect(['main', 'master']).toContain(s.branch)
     expect(typeof s.ahead).toBe('number')
     expect(typeof s.behind).toBe('number')
     expect(s.staged).toContain('b.txt')

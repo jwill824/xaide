@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { DetectedAgent } from './types'
@@ -30,14 +30,25 @@ export class AgentRegistry {
   }
 
   private detectCopilot(): DetectedAgent {
-    const bin = this.which('copilot')
+    const gh = this.which('gh')
+    let installed = false
+
+    if (gh) {
+      try {
+        const out = execSync('gh extension list', { encoding: 'utf8' })
+        installed = out.includes('copilot')
+      } catch {
+        installed = false
+      }
+    }
+
     return {
       id: 'copilot',
       name: 'GitHub Copilot',
-      command: 'copilot',
+      command: 'gh',
       args: [],
-      installed: bin !== null,
-      configPath: bin ? join(homedir(), '.config', 'gh') : null,
+      installed,
+      configPath: gh ? join(homedir(), '.config', 'gh') : null,
     }
   }
 }

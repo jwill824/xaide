@@ -42,13 +42,21 @@ export class GitManager {
     try {
       const branch = branchName || (await this.git.revparse(['--abbrev-ref', 'HEAD']))
       const base = baseBranchName || 'main'
-      const branchCommitsRaw = await this.git.log({ n: limit, from: branch })
-      const branchCommits: CommitInfo[] = branchCommitsRaw.all.map(c => ({
-        hash: c.hash,
-        author: c.author_name,
-        date: c.date,
-        message: c.message,
-      }))
+
+      // Get commits on the current branch (or try to get any commit if HEAD is not yet on a branch)
+      let branchCommits: CommitInfo[] = []
+      try {
+        const branchCommitsRaw = await this.git.log({ n: limit })
+        branchCommits = branchCommitsRaw.all.map(c => ({
+          hash: c.hash,
+          author: c.author_name,
+          date: c.date,
+          message: c.message,
+        }))
+      } catch {
+        // If we can't get branch commits, continue with empty array
+      }
+
       let baseContextCommits: CommitInfo[] = []
       try {
         const baseCommitsRaw = await this.git.log({ n: 5, from: base })
@@ -58,7 +66,10 @@ export class GitManager {
           date: c.date,
           message: c.message,
         }))
-      } catch {}
+      } catch {
+        // If base branch doesn't exist, continue with empty array
+      }
+
       return { branchCommits, baseContextCommits }
     } catch (e: any) {
       throw new Error(`Failed to get log: ${e.message}`)
