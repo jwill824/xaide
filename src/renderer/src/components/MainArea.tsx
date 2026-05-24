@@ -27,6 +27,7 @@ export const MainArea: FC = () => {
   const workspace = useActiveWorkspace()
 
   const [showLauncher, setShowLauncher] = useState(false)
+  const [launchError, setLaunchError] = useState<string | null>(null)
   const launchAgent = useLaunchAgent()
   const { data: worktrees = [] } = useWorktrees(activeWorkspaceId)
   const allAgentSessions = useUiStore((s) => s.agentSessions)
@@ -97,6 +98,7 @@ export const MainArea: FC = () => {
         branch: wt.branch,
         sandboxName,
       })
+      setLaunchError(null)
       setShowLauncher(false)
       const ptySessionId = record.ptySessionId ?? record.id
       const uiRecord: AgentSessionUiRecord = {
@@ -120,6 +122,7 @@ export const MainArea: FC = () => {
       })
     } catch (err) {
       console.error('[AgentLauncher] failed to launch agent:', err)
+      setLaunchError(String(err))
     }
   }
 
@@ -171,6 +174,9 @@ export const MainArea: FC = () => {
             onLaunch={handleLaunchAgent}
             onClose={() => setShowLauncher(false)}
           />
+        )}
+        {launchError && (
+          <p className="px-3 py-1 text-xs text-red-400">{launchError}</p>
         )}
       </div>
       <SessionTabBar

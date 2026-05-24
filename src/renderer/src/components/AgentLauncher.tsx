@@ -50,9 +50,9 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
         </div>
       </div>
 
-      {worktrees.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-neutral-400 mb-1 uppercase tracking-wider">Worktree</p>
+      <div>
+        <p className="text-xs font-semibold text-neutral-400 mb-1 uppercase tracking-wider">Worktree</p>
+        {worktrees.length > 0 ? (
           <div className="flex flex-col gap-1">
             {worktrees.map((wt) => (
               <button
@@ -70,8 +70,10 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
               </button>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-neutral-500">No worktrees — create one in the left panel</p>
+        )}
+      </div>
 
       <div className="flex gap-2 justify-end">
         <button
