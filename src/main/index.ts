@@ -91,6 +91,7 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       const w = createWindow()
       if (ptyManager) registerPtyHandlers(ptyManager, w.webContents)
+      agentSessionManager.setWebContents(w.webContents)
     }
   })
 })
