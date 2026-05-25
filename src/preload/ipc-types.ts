@@ -33,6 +33,33 @@ export interface WorkspaceAPI {
 
 // --- PTY ---
 
+// --- Git ---
+
+import type { StatusResult, DiffResult, CommitInfo, LogResult, Hunk } from '../main/git/types'
+
+export const GIT_CHANNELS = {
+  STATUS: 'git:status',
+  DIFF: 'git:diff',
+  LOG: 'git:log',
+  STAGE: 'git:stage',
+  UNSTAGE: 'git:unstage',
+  DISCARD: 'git:discard',
+  COMMIT: 'git:commit',
+  PUSH: 'git:push',
+} as const
+
+export interface GitAPI {
+  status: (worktreeId: string) => Promise<StatusResult>
+  diff: (worktreeId: string, filePath: string, staged: boolean) => Promise<DiffResult>
+  log: (worktreeId: string, limit?: number, branch?: string, baseB?: string) => Promise<LogResult>
+  stage: (worktreeId: string, files: string[]) => Promise<void>
+  unstage: (worktreeId: string, files: string[]) => Promise<void>
+  discard: (worktreeId: string, files: string[]) => Promise<void>
+  commit: (worktreeId: string, message: string, amend?: boolean) => Promise<string>
+  push: (worktreeId: string, setUpstream?: boolean) => Promise<string>
+}
+
+
 export const PTY_CHANNELS = {
   CREATE: 'pty:create',
   WRITE: 'pty:write',
@@ -333,6 +360,7 @@ export interface SettingsAPI {
 }
 
 export interface XaideAPI {
+  git: GitAPI;
   workspace: WorkspaceAPI
   pty: PtyAPI
   worktree: WorktreeAPI

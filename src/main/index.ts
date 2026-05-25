@@ -3,7 +3,8 @@ import { join } from 'path'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { createDb } from './db/client'
 import type { RawDb } from './db/client'
-import { dbSchema } from './db/schema'
+import { dbSchema, worktrees } from './db/schema'
+import { eq } from 'drizzle-orm'
 import { ConfigLoader } from './config/ConfigLoader'
 import { WorkspaceManager } from './workspace/WorkspaceManager'
 import { WorktreeManager } from './worktree/WorktreeManager'
@@ -17,6 +18,8 @@ import { SandboxManager } from './sandbox/SandboxManager'
 import { AgentConfigManager } from './settings/AgentConfigManager'
 import { HookManager } from './settings/HookManager'
 import { McpManager } from './settings/McpManager'
+import { GitManager } from './git/GitManager'
+import { registerGitHandlers } from './ipc'
 
 let sqlite: RawDb | null = null
 let ptyManager: PtyManager | null = null
@@ -59,6 +62,15 @@ app.whenReady().then(() => {
   const agentRegistry = new AgentRegistry()
   const agentSessionManager = new AgentSessionManager(db, ptyManager, hookRunner)
 
+  // Register Git IPC handlers
+  const getGitManagerForWorktree = (worktreeId: string) => {
+    const wt = db.select().from(worktrees).where(eq(worktrees.id, worktreeId)).get() ?? null
+    if (!wt) throw new Error(`Worktree not found: ${worktreeId}`)
+    return new GitManager(wt.worktreePath)
+  }
+  registerGitHandlers(getGitManagerForWorktree)
+
+
   const taskManager = new TaskManager(db)
   const sandboxManager = new SandboxManager()
   const agentConfigManager = new AgentConfigManager(db)
@@ -80,6 +92,7 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       const w = createWindow()
       if (ptyManager) registerPtyHandlers(ptyManager, w.webContents)
+      agentSessionManager.setWebContents(w.webContents)
     }
   })
 })

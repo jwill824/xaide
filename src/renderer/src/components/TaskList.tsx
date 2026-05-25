@@ -17,11 +17,27 @@ const STATUS_COLOR: Record<Task['status'], string> = {
   blocked: 'text-red-400',
 }
 
-interface Props {
-  workspaceId: string
+const STATUS_LABEL: Record<Task['status'], string> = {
+  pending: '○ pending',
+  in_progress: '● in progress',
+  done: '✓ done',
+  blocked: '✗ blocked',
 }
 
-export const TaskList: FC<Props> = ({ workspaceId }) => {
+const STATUS_NEXT: Record<Task['status'], string> = {
+  pending: 'Start → in progress',
+  in_progress: 'Complete → done',
+  done: 'Reset → pending',
+  blocked: 'Unblock → pending',
+}
+
+interface Props {
+  workspaceId: string
+  activeTaskId?: string | null
+  onSelectTask?: (taskId: string) => void
+}
+
+export const TaskList: FC<Props> = ({ workspaceId, activeTaskId, onSelectTask }) => {
   const { data: tasks = [], isLoading } = useTasks(workspaceId)
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
@@ -100,16 +116,20 @@ export const TaskList: FC<Props> = ({ workspaceId }) => {
           {tasks.map((task) => (
             <li
               key={task.id}
-              className="group px-3 py-1 flex items-center gap-2 hover:bg-neutral-800"
+              className={[
+                'group px-3 py-1 flex items-center gap-2 cursor-pointer',
+                activeTaskId === task.id ? 'bg-neutral-700' : 'hover:bg-neutral-800',
+              ].join(' ')}
+              onClick={() => onSelectTask?.(task.id)}
             >
               <button
                 type="button"
                 onClick={() => handleStatusCycle(task)}
-                className={`text-[10px] shrink-0 ${STATUS_COLOR[task.status]} hover:opacity-70`}
-                title={`Status: ${task.status} (click to advance)`}
-                aria-label={`Change status: ${task.status}`}
+                className={`text-[10px] shrink-0 font-medium ${STATUS_COLOR[task.status]} hover:opacity-70 transition-opacity cursor-pointer`}
+                title={STATUS_NEXT[task.status]}
+                aria-label={`${task.status} — click to advance`}
               >
-                {task.status}
+                {STATUS_LABEL[task.status]}
               </button>
               <span className="flex-1 text-xs text-neutral-300 truncate" title={task.title}>
                 {task.title}

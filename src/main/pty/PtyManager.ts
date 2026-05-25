@@ -31,6 +31,9 @@ export class PtyManager {
         ? 'powershell.exe'
         : (process.env['SHELL'] ?? '/bin/zsh'))
     const args = options.command ? (options.args ?? []) : []
+    if (options.id && this.sessions.has(options.id)) {
+      throw new Error(`PTY session already exists: ${options.id}`)
+    }
     const id = options.id ?? randomUUID()
     const ptyProcess = pty.spawn(shell, args, {
       name: 'xterm-color',

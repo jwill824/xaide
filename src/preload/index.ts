@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { XaideAPI, CreateWorkspaceInput, PtyCreateOptions, CreateWorktreeOptions, CreateAgentSessionInput, AgentAPI, TaskAPI, SandboxAPI, SandboxCreateOptions, SettingsAPI, UpsertAgentConfigInput, CreateHookInput, UpdateHookInput, CreateMcpServerInput, UpdateMcpServerInput } from './ipc-types'
-import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS, SANDBOX_CHANNELS, SETTINGS_CHANNELS } from './ipc-types'
+import { IPC_CHANNELS, PTY_CHANNELS, WORKTREE_CHANNELS, AGENT_CHANNELS, TASK_CHANNELS, SANDBOX_CHANNELS, SETTINGS_CHANNELS, GIT_CHANNELS, GitAPI } from './ipc-types'
 
 const api: XaideAPI = {
   workspace: {
@@ -52,6 +52,23 @@ const api: XaideAPI = {
     killSession: (sessionId: string, ptySessionId: string, sandboxName?: string) =>
       ipcRenderer.invoke(AGENT_CHANNELS.SESSION_KILL, sessionId, ptySessionId, sandboxName),
   } satisfies AgentAPI,
+  git: {
+    status: (worktreeId: string) => ipcRenderer.invoke(GIT_CHANNELS.STATUS, worktreeId),
+    diff: (worktreeId: string, filePath: string, staged: boolean) =>
+      ipcRenderer.invoke(GIT_CHANNELS.DIFF, worktreeId, filePath, staged),
+    log: (worktreeId: string, limit?: number, branch?: string, baseB?: string) =>
+      ipcRenderer.invoke(GIT_CHANNELS.LOG, worktreeId, limit, branch, baseB),
+    stage: (worktreeId: string, files: string[]) =>
+      ipcRenderer.invoke(GIT_CHANNELS.STAGE, worktreeId, files),
+    unstage: (worktreeId: string, files: string[]) =>
+      ipcRenderer.invoke(GIT_CHANNELS.UNSTAGE, worktreeId, files),
+    discard: (worktreeId: string, files: string[]) =>
+      ipcRenderer.invoke(GIT_CHANNELS.DISCARD, worktreeId, files),
+    commit: (worktreeId: string, message: string, amend?: boolean) =>
+      ipcRenderer.invoke(GIT_CHANNELS.COMMIT, worktreeId, message, amend),
+    push: (worktreeId: string, setUpstream?: boolean) =>
+      ipcRenderer.invoke(GIT_CHANNELS.PUSH, worktreeId, setUpstream),
+  } satisfies GitAPI,
   tasks: {
     list: (workspaceId) => ipcRenderer.invoke(TASK_CHANNELS.LIST, workspaceId),
     create: (input) => ipcRenderer.invoke(TASK_CHANNELS.CREATE, input),

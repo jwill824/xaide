@@ -4,12 +4,14 @@ import { IconRail, type IconRailItem } from './components/IconRail'
 import { LeftPanel } from './components/LeftPanel'
 import { MainArea } from './components/MainArea'
 import { SettingsView } from './components/SettingsView'
+import { GitPanel } from './components/GitPanel'
 import { TitleBar } from './components/TitleBar'
 
 const RAIL_DEFS = [
   { id: 'agents', icon: '⬡', label: 'Agents' },
   { id: 'tasks', icon: '☰', label: 'Tasks' },
   { id: 'extensions', icon: '⊞', label: 'Extensions' },
+  { id: 'git', icon: '⎇', label: 'Git' },
   { id: 'settings', icon: '⚙', label: 'Settings' },
 ] as const
 
@@ -31,6 +33,8 @@ function AppInner() {
         <IconRail items={railItems} />
         {activePanel === 'settings' ? (
           <SettingsView />
+        ) : activePanel === 'git' ? (
+          <GitPanel />
         ) : (
           <>
             {activePanel === 'agents' && <LeftPanel />}

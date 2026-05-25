@@ -21,7 +21,7 @@ function makeMockDb() {
 
 function makeMockPty() {
   return {
-    create: vi.fn().mockReturnValue({ id: 'pty-abc', process: { onData: vi.fn(), on: vi.fn() } }),
+    create: vi.fn().mockReturnValue({ id: 'pty-abc', process: { onData: vi.fn(), onExit: vi.fn() } }),
     kill: vi.fn(),
   } as unknown as PtyManager
 }
@@ -58,19 +58,57 @@ describe('AgentSessionManager', () => {
   })
 
   it('create inserts a record into agent_sessions', async () => {
-    const returning = [{ id: 'sess-1', agentId: 'claude', branch: 'feat/x', worktreePath: '/tmp/x', ptySessionId: 'pty-abc', taskId: null, containerId: null, status: 'running', createdAt: '', updatedAt: '' }]
+    const returning = [{ id: 'sess-1', agentId: 'claude', branch: 'feat/x', worktreePath: '/tmp/x', ptySessionId: 'pty-abc', taskId: null, containerId: null, status: 'pending', createdAt: '', updatedAt: '' }]
     db.insert = vi.fn().mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue(returning) }) })
     const result = await manager.create({ agentId: 'claude', worktreeId: 'wt-1', worktreePath: '/tmp/x', branch: 'feat/x', repoPath: '/repo' })
     expect(db.insert).toHaveBeenCalledOnce()
     expect(result.agentId).toBe('claude')
-    expect(pty.create).toHaveBeenCalledOnce()
+    // PTY is not spawned in create() — only in spawn() after terminal sizing
+    expect(pty.create).not.toHaveBeenCalled()
   })
 
-  it('create spawns PTY with the worktree path as cwd', async () => {
-    const returning = [{ id: 'sess-1', agentId: 'claude', branch: 'feat/x', worktreePath: '/tmp/wt', ptySessionId: 'pty-abc', taskId: null, containerId: null, status: 'running', createdAt: '', updatedAt: '' }]
-    db.insert = vi.fn().mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue(returning) }) })
+  it('spawn launches PTY with the worktree path as cwd', async () => {
+    // The manager will generate a ptySessionId internally; we need to mock the create properly
+    let capturedPtySessionId: string | null = null
+    db.insert = vi.fn().mockImplementation(() => ({
+      values: vi.fn().mockImplementation((values: any) => ({
+        returning: vi.fn().mockImplementation(() => {
+          capturedPtySessionId = values.ptySessionId
+          return Promise.resolve([{
+            id: 'sess-1',
+            agentId: values.agentId,
+            branch: values.branch,
+            worktreePath: values.worktreePath,
+            ptySessionId: values.ptySessionId,
+            taskId: values.taskId,
+            containerId: values.containerId,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }])
+        }),
+      })),
+    }))
+    
+    pty.create = vi.fn().mockReturnValue({ process: { onData: vi.fn(), onExit: vi.fn() } })
+    db.update = vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) })
+    
     await manager.create({ agentId: 'claude', worktreeId: 'wt-1', worktreePath: '/tmp/wt', branch: 'feat/x', repoPath: '/repo' })
-    expect((pty.create as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({ cwd: '/tmp/wt', command: 'claude' })
+    
+    // Now spawn with the actual generated ptySessionId
+    if (capturedPtySessionId) {
+      await manager.spawn(capturedPtySessionId, 80, 24)
+      
+      expect(pty.create).toHaveBeenCalledOnce()
+      expect(pty.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cwd: '/tmp/wt',
+          command: 'claude',
+          cols: 80,
+          rows: 24,
+        })
+      )
+    }
   })
 
   it('list queries all agent_sessions', async () => {
@@ -97,20 +135,30 @@ describe('sandbox integration', () => {
     hookRunner = makeHookRunner()
   })
 
-  it('create uses sbx runArgs PTY when sandboxName provided', async () => {
+  it('create prepares sbx runArgs for spawn', async () => {
     const sandboxMock = makeMockSandbox()
     const mgr = new AgentSessionManager(db as unknown as DrizzleDb, pty as unknown as PtyManager, hookRunner as unknown as HookRunner, sandboxMock as any)
 
-    vi.mocked(pty.create).mockReturnValue({ id: 'pty-1' } as any)
-    db.insert = vi.fn().mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'sess-1', agentId: 'claude', branch: 'main',
-          worktreePath: '/tmp/wt', ptySessionId: 'pty-1',
-          containerId: 'xaide-abc', status: 'running',
-        }]),
-      }),
-    } as any)
+    let capturedPtySessionId: string | null = null
+    db.insert = vi.fn().mockImplementation(() => ({
+      values: vi.fn().mockImplementation((values: any) => ({
+        returning: vi.fn().mockImplementation(() => {
+          capturedPtySessionId = values.ptySessionId
+          return Promise.resolve([{
+            id: 'sess-1',
+            agentId: values.agentId,
+            branch: values.branch,
+            worktreePath: values.worktreePath,
+            ptySessionId: values.ptySessionId,
+            taskId: values.taskId,
+            containerId: values.containerId,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }])
+        }),
+      })),
+    }))
 
     const result = await mgr.create({
       agentId: 'claude',
@@ -121,12 +169,23 @@ describe('sandbox integration', () => {
     })
 
     expect(sandboxMock.create).toHaveBeenCalledWith({ name: 'xaide-abc', worktreePath: '/tmp/wt' })
-    expect(sandboxMock.runArgs).toHaveBeenCalledWith('xaide-abc', 'claude')
-    expect(pty.create).toHaveBeenCalledWith(expect.objectContaining({
-      command: 'sbx',
-      args: ['run', 'claude', '--name', 'xaide-abc'],
-    }))
     expect(result.containerId).toBe('xaide-abc')
+
+    // Now spawn and verify PTY is created with sbx args
+    pty.create = vi.fn().mockReturnValue({ process: { onData: vi.fn(), onExit: vi.fn() } })
+    db.update = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    } as any)
+
+    if (capturedPtySessionId) {
+      await mgr.spawn(capturedPtySessionId, 80, 24)
+
+      expect(sandboxMock.runArgs).toHaveBeenCalledWith('xaide-abc', 'claude')
+      expect(pty.create).toHaveBeenCalledWith(expect.objectContaining({
+        command: 'sbx',
+        args: ['run', 'claude', '--name', 'xaide-abc'],
+      }))
+    }
   })
 
   it('kill calls sandbox.stop when sandboxName provided', async () => {
