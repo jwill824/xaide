@@ -8,6 +8,8 @@ export const LeftPanel: FC = () => {
   const { data: workspaces = [], isLoading, isError } = useWorkspaces()
   const activeWorkspaceId = useUiStore((s) => s.activeWorkspaceId)
   const setActiveWorkspace = useUiStore((s) => s.setActiveWorkspace)
+  const activeTaskId = useUiStore((s) => s.activeTaskId)
+  const setActiveTask = useUiStore((s) => s.setActiveTask)
 
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -122,7 +124,11 @@ export const LeftPanel: FC = () => {
         />
       )}
       {activeWorkspaceId && (
-        <TaskList workspaceId={activeWorkspaceId} />
+        <TaskList
+          workspaceId={activeWorkspaceId}
+          activeTaskId={activeTaskId}
+          onSelectTask={setActiveTask}
+        />
       )}
     </aside>
   )

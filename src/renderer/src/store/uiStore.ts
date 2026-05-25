@@ -27,6 +27,7 @@ interface UiState {
   browserUrlByWorkspace: Record<string, string>
   browserVisibleByWorkspace: Record<string, boolean>
   activeWorktreeId: string | null
+  activeTaskId: string | null
   agentSessions: AgentSessionUiRecord[]
   addAgentSession: (session: AgentSessionUiRecord) => void
   removeAgentSession: (id: string) => void
@@ -39,6 +40,7 @@ interface UiState {
   setBrowserUrl: (workspaceId: string, url: string) => void
   toggleBrowser: (workspaceId: string) => void
   setActiveWorktree: (id: string | null) => void
+  setActiveTask: (id: string | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -49,6 +51,7 @@ export const useUiStore = create<UiState>((set) => ({
   browserUrlByWorkspace: {},
   browserVisibleByWorkspace: {},
   activeWorktreeId: null,
+  activeTaskId: null,
   agentSessions: [],
 
   setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
@@ -123,6 +126,7 @@ export const useUiStore = create<UiState>((set) => ({
     })),
 
   setActiveWorktree: (id) => set({ activeWorktreeId: id }),
+  setActiveTask: (id) => set({ activeTaskId: id }),
 
   addAgentSession: (session) =>
     set((state) => ({ agentSessions: [...state.agentSessions, session] })),

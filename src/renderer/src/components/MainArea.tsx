@@ -8,6 +8,7 @@ import { TerminalPane } from './TerminalPane'
 import { AgentLauncher } from './AgentLauncher'
 import { useLaunchAgent } from '../hooks/useAgents'
 import { useWorktrees } from '../hooks/useWorktrees'
+import { useUpdateTask } from '../hooks/useTasks'
 import type { PaneNode } from '../types/layout'
 import type { AgentSessionUiRecord } from '../store/uiStore'
 
@@ -29,7 +30,9 @@ export const MainArea: FC = () => {
   const [showLauncher, setShowLauncher] = useState(false)
   const [launchError, setLaunchError] = useState<string | null>(null)
   const launchAgent = useLaunchAgent()
+  const updateTask = useUpdateTask()
   const { data: worktrees = [] } = useWorktrees(activeWorkspaceId)
+  const activeTaskId = useUiStore((s) => s.activeTaskId)
   const allAgentSessions = useUiStore((s) => s.agentSessions)
   const addAgentSession = useUiStore((s) => s.addAgentSession)
   const removeAgentSession = useUiStore((s) => s.removeAgentSession)
@@ -100,6 +103,17 @@ export const MainArea: FC = () => {
       })
       setLaunchError(null)
       setShowLauncher(false)
+      // Auto-advance the active task to in_progress
+      if (activeTaskId) {
+        updateTask.mutate(
+          { id: activeTaskId, input: { status: 'in_progress' } },
+          {
+            onError: (err) => console.error('[MainArea] failed to advance task status:', err),
+          },
+        )
+      } else {
+        console.warn('[MainArea] launched agent with no active task selected')
+      }
       const ptySessionId = record.ptySessionId ?? record.id
       const uiRecord: AgentSessionUiRecord = {
         id: record.id,
@@ -171,6 +185,7 @@ export const MainArea: FC = () => {
         {showLauncher && (
           <AgentLauncher
             worktrees={worktrees}
+            activeTaskId={activeTaskId}
             onLaunch={handleLaunchAgent}
             onClose={() => setShowLauncher(false)}
           />

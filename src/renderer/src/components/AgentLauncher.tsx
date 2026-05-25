@@ -6,11 +6,12 @@ import type { WorktreeRecord } from '../../../preload/ipc-types'
 
 interface Props {
   worktrees: WorktreeRecord[]
+  activeTaskId?: string | null
   onLaunch: (agentId: string, worktreeId: string, sandboxName?: string) => void
   onClose: () => void
 }
 
-export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
+export const AgentLauncher: FC<Props> = ({ worktrees, activeTaskId, onLaunch, onClose }) => {
   const { data: agents = [] } = useDetectedAgents()
   const { available: sbxAvailable, loading: sbxLoading } = useSbxStatus()
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
@@ -23,6 +24,15 @@ export const AgentLauncher: FC<Props> = ({ worktrees, onLaunch, onClose }) => {
 
   return (
     <div className="absolute top-8 left-0 z-50 w-72 bg-neutral-800 border border-neutral-700 rounded shadow-lg p-3 flex flex-col gap-3">
+      {activeTaskId ? (
+        <p className="text-xs text-blue-400 font-medium">
+          ⚡ Will start task on launch
+        </p>
+      ) : (
+        <p className="text-xs text-neutral-500 italic">
+          No task selected — select one in the left panel to track progress
+        </p>
+      )}
       <div>
         <p className="text-xs font-semibold text-neutral-400 mb-1 uppercase tracking-wider">Agent</p>
         <div className="flex flex-col gap-1">
